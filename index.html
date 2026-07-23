@@ -709,8 +709,10 @@ const REGIONS = [
 /* Each category: unit + tier midpoints. Restaurant/retail has no ultra tier. */
 const CATEGORIES = [
   {group:"Architectural Millwork", name:"Base cabinets, plastic laminate", unit:"LF", tiers:{Economy:300, Standard:425, Premium:625, "Ultra-premium":975}},
+  {group:"Architectural Millwork", name:"Base cabinets, painted", unit:"LF", tiers:{Economy:435, Standard:615, Premium:910, "Ultra-premium":1450}},
   {group:"Architectural Millwork", name:"Base cabinets, wood veneer", unit:"LF", tiers:{Economy:475, Standard:675, Premium:1000, "Ultra-premium":1600}},
   {group:"Architectural Millwork", name:"Wall cabinets, plastic laminate", unit:"LF", tiers:{Economy:215, Standard:315, Premium:465, "Ultra-premium":725}},
+  {group:"Architectural Millwork", name:"Wall cabinets, painted", unit:"LF", tiers:{Economy:310, Standard:455, Premium:680, "Ultra-premium":1090}},
   {group:"Architectural Millwork", name:"Wall cabinets, wood veneer", unit:"LF", tiers:{Economy:340, Standard:500, Premium:750, "Ultra-premium":1200}},
   {group:"Architectural Millwork", name:"Full-height storage / pantry", unit:"LF", tiers:{Economy:600, Standard:850, Premium:1250, "Ultra-premium":2000}},
   {group:"Architectural Millwork", name:"Reception desks", unit:"LF", tiers:{Economy:1500, Standard:2750, Premium:5000, "Ultra-premium":8000}},
@@ -851,8 +853,10 @@ function tierDefFor(cat){
 /* Categories whose material is fixed by their name — tiers step up execution, not material. */
 const MAT_FIXED = new Set([
   "Base cabinets, plastic laminate",
+  "Base cabinets, painted",
   "Base cabinets, wood veneer",
   "Wall cabinets, plastic laminate",
+  "Wall cabinets, painted",
   "Wall cabinets, wood veneer",
   "Countertops, solid surface",
   "Countertops, quartz",
@@ -864,8 +868,10 @@ const MAT_FIXED = new Set([
    Midpoints in CATEGORIES are the arithmetic center of these ranges. */
 const DETAILS = {
   "Base cabinets, plastic laminate":{desc:"Floor-mounted base cabinetry, plastic-laminate faced over an MDF/particleboard core — doors, drawers, adjustable shelving, and standard hardware. Priced per linear foot of cabinet run.", r:{Economy:[250,350],Standard:[350,500],Premium:[500,750],"Ultra-premium":[750,1200]}},
+  "Base cabinets, painted":{desc:"Floor-mounted base cabinetry with painted paint-grade maple / moisture-resistant MDF fronts over a plywood box — doors, drawers, soft-close hardware, hand-finished paint. High-end residential frameless or inset. Per linear foot of run (sits just below wood veneer).", r:{Economy:[365,505],Standard:[500,730],Premium:[730,1090],"Ultra-premium":[1090,1810]}},
   "Base cabinets, wood veneer":{desc:"Floor-mounted base cabinetry faced in real wood veneer over an MDF/ply core — doors, drawers, hardware, with grain-matching at upper tiers. Per linear foot of run.", r:{Economy:[400,550],Standard:[550,800],Premium:[800,1200],"Ultra-premium":[1200,2000]}},
   "Wall cabinets, plastic laminate":{desc:"Wall-hung upper cabinetry, laminate-faced — doors, adjustable shelving, and concealed hinges. Priced per linear foot.", r:{Economy:[180,250],Standard:[250,380],Premium:[380,550],"Ultra-premium":[550,900]}},
+  "Wall cabinets, painted":{desc:"Wall-hung upper cabinetry with painted maple / MDF fronts — doors, adjustable shelving, and soft-close hardware. High-end residential. Per linear foot (sits just below wood veneer).", r:{Economy:[250,370],Standard:[360,550],Premium:[550,810],"Ultra-premium":[810,1370]}},
   "Wall cabinets, wood veneer":{desc:"Wall-hung upper cabinetry in real wood veneer — doors, shelving, and soft-close hardware. Per linear foot.", r:{Economy:[280,400],Standard:[400,600],Premium:[600,900],"Ultra-premium":[900,1500]}},
   "Full-height storage / pantry":{desc:"Floor-to-ceiling tall storage and pantry units — doors, interior shelving and pull-outs, full-extension slides. Per linear foot.", r:{Economy:[500,700],Standard:[700,1000],Premium:[1000,1500],"Ultra-premium":[1500,2500]}},
   "Reception desks":{desc:"Custom front-of-house reception desk — transaction top, ADA-height section, integrated cable management, and a brand-facing feature panel. Per linear foot of desk (recalibrated 2026 — a feature piece, so short desks land near the top of the band).", r:{Economy:[1000,2000],Standard:[2000,3500],Premium:[3500,6500],"Ultra-premium":[6500,9500]}},
@@ -942,8 +948,10 @@ const DETAILS = {
 /* Schematic shape per category (drives the per-line visualizer). */
 const SHAPE_BY_NAME = {
   "Base cabinets, plastic laminate":"baseCab",
+  "Base cabinets, painted":"baseCab",
   "Base cabinets, wood veneer":"baseCab",
   "Wall cabinets, plastic laminate":"wallCab",
+  "Wall cabinets, painted":"wallCab",
   "Wall cabinets, wood veneer":"wallCab",
   "Full-height storage / pantry":"tall",
   "Reception desks":"reception",
