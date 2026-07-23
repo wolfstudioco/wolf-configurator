@@ -384,6 +384,76 @@
     border-bottom:1px solid var(--line);
   }
 
+  /* ---------- Sets (grouped line items with a shared multiplier) ---------- */
+  .set{
+    border:1px solid var(--line-strong);
+    border-radius:var(--radius);
+    background:rgba(0,0,0,0.015);
+    margin:16px 0;
+    overflow:hidden;
+  }
+  .set-head{
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    padding:11px 14px;
+    border-bottom:1px solid var(--line);
+    background:var(--card);
+  }
+  .set-badge{
+    font-size:10px;letter-spacing:0.15em;text-transform:uppercase;
+    color:var(--ink-faint);font-weight:600;white-space:nowrap;
+  }
+  .set-name{
+    flex:1;min-width:140px;
+    font-family:inherit;font-size:15px;font-weight:600;color:var(--ink);
+    border:1px solid transparent;background:transparent;
+    padding:6px 8px;border-radius:var(--radius);
+  }
+  .set-name:hover{border-color:var(--line);}
+  .set-name:focus{border-color:var(--accent);background:var(--card);outline:none;}
+  .set-qty-wrap{
+    display:flex;align-items:center;gap:7px;
+    font-size:11px;color:var(--ink-faint);letter-spacing:0.08em;text-transform:uppercase;
+    white-space:nowrap;
+  }
+  .set-qty-wrap .mult{font-size:15px;color:var(--ink-soft);font-weight:600;}
+  .set-qty{
+    width:66px;text-align:center;
+    font-size:15px;font-weight:600;
+  }
+  .set-remove{
+    border:none;background:none;cursor:pointer;color:var(--ink-faint);
+    font-size:20px;line-height:1;padding:4px;border-radius:var(--radius);
+  }
+  .set-remove:hover{color:var(--ink);}
+  .set-lines{list-style:none;margin:0;padding:0 14px;}
+  .set-lines .line:last-child{border-bottom:none;}
+  .set-empty{
+    padding:22px 4px;text-align:center;color:var(--ink-faint);font-size:12px;
+    letter-spacing:0.02em;
+  }
+  .set-foot{
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    padding:11px 14px;border-top:1px solid var(--line);
+    background:var(--card);
+  }
+  .set-foot .btn{padding:8px 14px;}
+  .set-total-block{
+    margin-left:auto;text-align:right;
+    display:flex;flex-direction:column;gap:2px;
+  }
+  .set-unit-row{
+    font-size:11px;color:var(--ink-faint);letter-spacing:0.04em;
+    font-variant-numeric:tabular-nums;
+  }
+  .set-total-row{
+    font-size:10px;letter-spacing:0.12em;text-transform:uppercase;
+    color:var(--ink-faint);font-weight:600;
+  }
+  .set-total-row .set-subtotal{
+    margin-left:8px;font-size:16px;font-weight:600;color:var(--ink);
+    letter-spacing:0.01em;text-transform:none;font-variant-numeric:tabular-nums;
+  }
+
   /* ---------- Actions ---------- */
   .actions{
     display:flex;
@@ -551,6 +621,11 @@
     .print-only{display:block;}
     .totals{border-top:1.5px solid #000;}
     .install-note,.total-row .value,.total-row .label{color:#000;}
+    .set{page-break-inside:avoid;border:1px solid #000;background:#fff;margin:12px 0;}
+    .set-head,.set-foot{background:#fff;}
+    .set-name{border:none;background:none;color:#000;padding:2px 0;font-size:12pt;}
+    .set-qty{border:none;background:none;color:#000;-webkit-appearance:none;appearance:none;}
+    .set-total-row .set-subtotal,.set-unit-row,.set-badge{color:#000;}
   }
 </style>
 </head>
@@ -591,6 +666,7 @@
 
   <div class="actions no-print">
     <button class="btn btn-ghost" id="addLine">+ Add Line</button>
+    <button class="btn btn-ghost" id="addSet">+ Add Set</button>
     <div class="spacer"></div>
     <button class="btn btn-plain" id="clearAll">Clear All</button>
     <button class="btn btn-primary" id="printBtn">Print</button>
@@ -1192,7 +1268,8 @@ function buildThumbArt(cat, qty){
 /* ---------- Add a line ---------- */
 const linesEl = document.getElementById("lines");
 
-function addLine(){
+function addLine(container){
+  const target = (container instanceof Element) ? container : linesEl;
   const id = ++lineSeq;
   const li = document.createElement("li");
   li.className = "line";
@@ -1308,14 +1385,31 @@ function addLine(){
     recalcLine(li);
   });
   rm.addEventListener("click", ()=>{
+    const setLines = li.closest(".set-lines");
     li.remove();
+    if(setLines) refreshSetEmpty(setLines);
     ensureEmptyState();
     recalcTotals();
   });
 
-  removeEmptyState();
-  linesEl.appendChild(li);
+  const inSet = target.classList && target.classList.contains("set-lines");
+  if(inSet) removeSetEmpty(target); else removeEmptyState();
+  target.appendChild(li);
   recalcLine(li);
+}
+
+/* ---------- Set empty-hint helpers ---------- */
+function refreshSetEmpty(setLines){
+  if(!setLines.querySelector(".line") && !setLines.querySelector(".set-empty")){
+    const e = document.createElement("li");
+    e.className = "set-empty";
+    e.textContent = "Empty set — add the pieces that make up one unit.";
+    setLines.appendChild(e);
+  }
+}
+function removeSetEmpty(setLines){
+  const e = setLines.querySelector(".set-empty");
+  if(e) e.remove();
 }
 
 /* ---------- Recalc a single line ---------- */
@@ -1403,15 +1497,33 @@ function recalcAll(){
 /* ---------- Totals ---------- */
 function recalcTotals(){
   let total = 0;
-  linesEl.querySelectorAll(".line").forEach(li=>{
+
+  // Ungrouped lines (direct children of #lines)
+  linesEl.querySelectorAll(":scope > .line").forEach(li=>{
     total += parseFloat(li.dataset.subtotal) || 0;
   });
+
+  // Sets: sum of their lines = price of one unit; × set qty = set total
+  linesEl.querySelectorAll(":scope > .set").forEach(setEl=>{
+    let perUnit = 0;
+    setEl.querySelectorAll(".set-lines > .line").forEach(li=>{
+      perUnit += parseFloat(li.dataset.subtotal) || 0;
+    });
+    const q = parseFloat(setEl.querySelector(".set-qty").value);
+    const qty = (isNaN(q) ? 1 : q);
+    const setTotal = perUnit * qty;
+    setEl.querySelector(".set-unit-row").textContent =
+      fmt(perUnit) + " per unit  ×  " + qty;
+    setEl.querySelector(".set-subtotal").textContent = fmt(setTotal);
+    total += setTotal;
+  });
+
   document.getElementById("grandTotal").textContent = fmt(total);
 }
 
 /* ---------- Empty state ---------- */
 function ensureEmptyState(){
-  if(!linesEl.querySelector(".line") && !linesEl.querySelector(".empty")){
+  if(!linesEl.querySelector(".line") && !linesEl.querySelector(".set") && !linesEl.querySelector(".empty")){
     const e = document.createElement("li");
     e.className="empty";
     e.textContent="No line items yet. Select “+ Add Line” to begin an estimate.";
@@ -1423,8 +1535,92 @@ function removeEmptyState(){
   if(e) e.remove();
 }
 
+/* ---------- Add a set (grouped lines with a shared ×N multiplier) ---------- */
+let setSeq = 0;
+function addSet(){
+  const n = ++setSeq;
+  const set = document.createElement("li");
+  set.className = "set";
+
+  // Head: badge + editable name + ×qty + remove
+  const head = document.createElement("div");
+  head.className = "set-head";
+
+  const badge = document.createElement("span");
+  badge.className = "set-badge";
+  badge.textContent = "Set";
+
+  const name = document.createElement("input");
+  name.className = "set-name";
+  name.type = "text";
+  name.value = "Set " + n;
+  name.setAttribute("aria-label","Set name");
+
+  const qw = document.createElement("div");
+  qw.className = "set-qty-wrap";
+  const mult = document.createElement("span"); mult.className="mult"; mult.textContent="×";
+  const qty = document.createElement("input");
+  qty.className = "set-qty";
+  qty.type = "number"; qty.min = "0"; qty.step = "1"; qty.value = "1";
+  qty.setAttribute("aria-label","Number of sets");
+  const qlab = document.createElement("span"); qlab.textContent = "units";
+  qw.appendChild(mult); qw.appendChild(qty); qw.appendChild(qlab);
+
+  const rm = document.createElement("button");
+  rm.className = "set-remove no-print";
+  rm.innerHTML = "&times;";
+  rm.title = "Remove set";
+  rm.setAttribute("aria-label","Remove set");
+
+  head.appendChild(badge);
+  head.appendChild(name);
+  head.appendChild(qw);
+  head.appendChild(rm);
+
+  // Body: lines belonging to this set
+  const body = document.createElement("ul");
+  body.className = "set-lines";
+
+  // Foot: add-line-to-set + running totals
+  const foot = document.createElement("div");
+  foot.className = "set-foot";
+  const addBtn = document.createElement("button");
+  addBtn.className = "btn btn-ghost no-print";
+  addBtn.textContent = "+ Add line to set";
+  const totalBlock = document.createElement("div");
+  totalBlock.className = "set-total-block";
+  const unitRow = document.createElement("div"); unitRow.className = "set-unit-row"; unitRow.textContent = "$0 per unit  ×  1";
+  const totalRow = document.createElement("div"); totalRow.className = "set-total-row";
+  totalRow.innerHTML = "Set total <span class=\"set-subtotal\">$0</span>";
+  totalBlock.appendChild(unitRow); totalBlock.appendChild(totalRow);
+  foot.appendChild(addBtn);
+  foot.appendChild(totalBlock);
+
+  set.appendChild(head);
+  set.appendChild(body);
+  set.appendChild(foot);
+
+  // Events
+  qty.addEventListener("input", recalcTotals);
+  addBtn.addEventListener("click", ()=>addLine(body));
+  rm.addEventListener("click", ()=>{
+    set.remove();
+    ensureEmptyState();
+    recalcTotals();
+  });
+
+  removeEmptyState();
+  linesEl.appendChild(set);
+
+  // Seed the set with one line so it's immediately usable
+  addLine(body);
+  recalcTotals();
+  name.focus(); name.select();
+}
+
 /* ---------- Buttons ---------- */
-document.getElementById("addLine").addEventListener("click", addLine);
+document.getElementById("addLine").addEventListener("click", ()=>addLine(linesEl));
+document.getElementById("addSet").addEventListener("click", addSet);
 
 document.getElementById("clearAll").addEventListener("click", ()=>{
   linesEl.innerHTML="";
