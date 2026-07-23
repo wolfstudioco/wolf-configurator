@@ -734,10 +734,10 @@ const REGIONS = [
 
 /* Each category: unit + tier midpoints. Restaurant/retail has no ultra tier. */
 const CATEGORIES = [
-  {group:"Architectural Millwork", name:"Base cabinets, laminate", unit:"LF", tiers:{Economy:300, Standard:425, Premium:625, "Ultra-premium":975}},
+  {group:"Architectural Millwork", name:"Base cabinets, TFL", unit:"LF", tiers:{Economy:300, Standard:425, Premium:625, "Ultra-premium":975}},
   {group:"Architectural Millwork", name:"Base cabinets, painted", unit:"LF", tiers:{Economy:435, Standard:615, Premium:910, "Ultra-premium":1450}},
   {group:"Architectural Millwork", name:"Base cabinets, wood veneer", unit:"LF", tiers:{Economy:475, Standard:675, Premium:1000, "Ultra-premium":1600}},
-  {group:"Architectural Millwork", name:"Wall cabinets, laminate", unit:"LF", tiers:{Economy:215, Standard:315, Premium:465, "Ultra-premium":725}},
+  {group:"Architectural Millwork", name:"Wall cabinets, TFL", unit:"LF", tiers:{Economy:215, Standard:315, Premium:465, "Ultra-premium":725}},
   {group:"Architectural Millwork", name:"Wall cabinets, painted", unit:"LF", tiers:{Economy:310, Standard:455, Premium:680, "Ultra-premium":1090}},
   {group:"Architectural Millwork", name:"Wall cabinets, wood veneer", unit:"LF", tiers:{Economy:340, Standard:500, Premium:750, "Ultra-premium":1200}},
   {group:"Architectural Millwork", name:"Full-height storage / pantry", unit:"LF", tiers:{Economy:600, Standard:850, Premium:1250, "Ultra-premium":2000}},
@@ -824,7 +824,7 @@ const TIER_ORDER = ["Economy","Standard","Premium","Ultra-premium"];
    solid surface, quartz, stone, wood ceilings) hold their material — the tier then
    reflects hardware, detailing, and finish grade, NOT a material change. */
 const TIER_DEF_OPEN = {
-  "Economy":"laminate / melamine, standard hardware, off-the-shelf finishes, minimal detail — value-engineered, budget-driven work.",
+  "Economy":"TFL casework with laminate, edgebanded tops, standard hardware, off-the-shelf finishes, minimal detail — value-engineered, budget-driven work.",
   "Standard":"laminate with veneer accents, mid-tier soft-close hardware, consistent finish — where most hotel FF&E and commercial casework lands.",
   "Premium":"real wood veneers, quality concealed hardware, matched grain, detailed craftsmanship — upper-scale hospitality, boutique retail, flagship restaurant.",
   "Ultra-premium":"solid hardwood, sculpted details, mixed-material construction (wood + brass + stone), custom hardware — luxury hospitality, high-end restaurants, HNW residential."
@@ -850,7 +850,7 @@ const TIER_DEF_UPHOLSTERY = {
 
 /* Restaurant furniture. Table tiers = top material; chair tiers = line level. */
 const TIER_DEF_REST_TABLE = {
-  "Economy":"laminate top with vinyl T-mold edge, on a pedestal base (round/square) or steel trestle base (rectangular).",
+  "Economy":"laminate top with edgebanding, on a pedestal base (round/square) or steel trestle base (rectangular).",
   "Standard":"premium laminate top with wood-look overlay edge, pedestal / trestle base.",
   "Premium":"solid maple top, pedestal / trestle base — the classic commercial wood table.",
   "Ultra-premium":"solid walnut / mixed-hardwood top, pedestal / trestle base — top-tier species."
@@ -896,10 +896,10 @@ function tierDefFor(cat){
 
 /* Categories whose material is fixed by their name — tiers step up execution, not material. */
 const MAT_FIXED = new Set([
-  "Base cabinets, laminate",
+  "Base cabinets, TFL",
   "Base cabinets, painted",
   "Base cabinets, wood veneer",
-  "Wall cabinets, laminate",
+  "Wall cabinets, TFL",
   "Wall cabinets, painted",
   "Wall cabinets, wood veneer",
   "Countertops, solid surface",
@@ -911,10 +911,10 @@ const MAT_FIXED = new Set([
 /* Door-front casework where frameless vs. inset is a real construction choice.
    Inset (flush inset face frame) runs a flat +12% over frameless. */
 const CONSTRUCTION_CATS = new Set([
-  "Base cabinets, laminate",
+  "Base cabinets, TFL",
   "Base cabinets, painted",
   "Base cabinets, wood veneer",
-  "Wall cabinets, laminate",
+  "Wall cabinets, TFL",
   "Wall cabinets, painted",
   "Wall cabinets, wood veneer",
   "Full-height storage / pantry",
@@ -925,10 +925,10 @@ const INSET_UPCHARGE = 1.12;
 /* Per-category description (what the price includes) + sell-side range per tier.
    Midpoints in CATEGORIES are the arithmetic center of these ranges. */
 const DETAILS = {
-  "Base cabinets, laminate":{desc:"Floor-mounted base cabinetry, laminate-faced over an MDF/particleboard core — doors, drawers, adjustable shelving, and standard hardware. Priced per linear foot of cabinet run.", r:{Economy:[250,350],Standard:[350,500],Premium:[500,750],"Ultra-premium":[750,1200]}},
+  "Base cabinets, TFL":{desc:"Floor-mounted base cabinetry in TFL (thermally fused laminate) over an MDF/particleboard core — doors, drawers, adjustable shelving, and standard hardware. Priced per linear foot of cabinet run.", r:{Economy:[250,350],Standard:[350,500],Premium:[500,750],"Ultra-premium":[750,1200]}},
   "Base cabinets, painted":{desc:"Floor-mounted base cabinetry with painted paint-grade maple / moisture-resistant MDF fronts over a plywood box — doors, drawers, soft-close hardware, hand-finished paint. High-end residential frameless or inset. Per linear foot of run (sits just below wood veneer).", r:{Economy:[365,505],Standard:[500,730],Premium:[730,1090],"Ultra-premium":[1090,1810]}},
   "Base cabinets, wood veneer":{desc:"Floor-mounted base cabinetry faced in real wood veneer over an MDF/ply core — doors, drawers, hardware, with grain-matching at upper tiers. Per linear foot of run.", r:{Economy:[400,550],Standard:[550,800],Premium:[800,1200],"Ultra-premium":[1200,2000]}},
-  "Wall cabinets, laminate":{desc:"Wall-hung upper cabinetry, laminate-faced — doors, adjustable shelving, and concealed hinges. Priced per linear foot.", r:{Economy:[180,250],Standard:[250,380],Premium:[380,550],"Ultra-premium":[550,900]}},
+  "Wall cabinets, TFL":{desc:"Wall-hung upper cabinetry in TFL (thermally fused laminate) — doors, adjustable shelving, and concealed hinges. Priced per linear foot.", r:{Economy:[180,250],Standard:[250,380],Premium:[380,550],"Ultra-premium":[550,900]}},
   "Wall cabinets, painted":{desc:"Wall-hung upper cabinetry with painted maple / MDF fronts — doors, adjustable shelving, and soft-close hardware. High-end residential. Per linear foot (sits just below wood veneer).", r:{Economy:[250,370],Standard:[360,550],Premium:[550,810],"Ultra-premium":[810,1370]}},
   "Wall cabinets, wood veneer":{desc:"Wall-hung upper cabinetry in real wood veneer — doors, shelving, and soft-close hardware. Per linear foot.", r:{Economy:[280,400],Standard:[400,600],Premium:[600,900],"Ultra-premium":[900,1500]}},
   "Full-height storage / pantry":{desc:"Floor-to-ceiling tall storage and pantry units — doors, interior shelving and pull-outs, full-extension slides. Per linear foot.", r:{Economy:[500,700],Standard:[700,1000],Premium:[1000,1500],"Ultra-premium":[1500,2500]}},
@@ -1008,10 +1008,10 @@ const DETAILS = {
 /* Merge descriptions + ranges into the category records. */
 /* Schematic shape per category (drives the per-line visualizer). */
 const SHAPE_BY_NAME = {
-  "Base cabinets, laminate":"baseCab",
+  "Base cabinets, TFL":"baseCab",
   "Base cabinets, painted":"baseCab",
   "Base cabinets, wood veneer":"baseCab",
-  "Wall cabinets, laminate":"wallCab",
+  "Wall cabinets, TFL":"wallCab",
   "Wall cabinets, painted":"wallCab",
   "Wall cabinets, wood veneer":"wallCab",
   "Full-height storage / pantry":"tall",
@@ -1788,7 +1788,7 @@ document.getElementById("printBtn").addEventListener("click", ()=>{
   if(!body) return;
   const systems = [
     ["Millwork & FF&E — material steps up by tier", TIER_DEF_OPEN],
-    ["Millwork, fixed material (laminate, veneer, solid surface, quartz, stone, wood ceilings) — execution steps up", TIER_DEF_FIXED],
+    ["Millwork, fixed material (TFL, veneer, solid surface, quartz, stone, wood ceilings) — execution steps up", TIER_DEF_FIXED],
     ["Doors — tier steps by wood species (size adjusts on top)", TIER_DEF_DOOR],
     ["Metalwork", TIER_DEF_METAL],
     ["Upholstery", TIER_DEF_UPHOLSTERY]
