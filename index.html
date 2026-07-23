@@ -345,6 +345,28 @@
     white-space:nowrap;
   }
 
+  /* Frameless / Inset construction toggle (cabinet lines only) */
+  .ld-construction{
+    display:flex;align-items:center;gap:10px;
+    margin:1px 0 3px;
+  }
+  .lc-label{
+    font-size:10px;letter-spacing:0.12em;text-transform:uppercase;
+    color:var(--ink-faint);font-weight:600;
+  }
+  .seg{
+    display:inline-flex;border:1px solid var(--line-strong);
+    border-radius:var(--radius);overflow:hidden;
+  }
+  .seg-btn{
+    font-family:inherit;font-size:11px;letter-spacing:0.03em;
+    padding:4px 13px;border:none;background:var(--card);color:var(--ink-faint);
+    cursor:pointer;transition:background .12s ease,color .12s ease;
+  }
+  .seg-btn + .seg-btn{border-left:1px solid var(--line-strong);}
+  .seg-btn:hover{color:var(--ink);}
+  .seg-btn.active{background:var(--accent);color:#fff;}
+
   .line .unit{
     font-size:13px;
     color:var(--ink-soft);
@@ -626,6 +648,10 @@
     .set-name{border:none;background:none;color:#000;padding:2px 0;font-size:12pt;}
     .set-qty{border:none;background:none;color:#000;-webkit-appearance:none;appearance:none;}
     .set-total-row .set-subtotal,.set-unit-row,.set-badge{color:#000;}
+    .seg{border:none;}
+    .seg-btn{display:none !important;padding:0;}
+    .seg-btn.active{display:inline !important;background:none;color:#000;font-weight:600;}
+    .lc-label{color:#000;}
   }
 </style>
 </head>
@@ -864,6 +890,20 @@ const MAT_FIXED = new Set([
   "Ceiling systems, wood"
 ]);
 
+/* Door-front casework where frameless vs. inset is a real construction choice.
+   Inset (flush inset face frame) runs a flat +12% over frameless. */
+const CONSTRUCTION_CATS = new Set([
+  "Base cabinets, plastic laminate",
+  "Base cabinets, painted",
+  "Base cabinets, wood veneer",
+  "Wall cabinets, plastic laminate",
+  "Wall cabinets, painted",
+  "Wall cabinets, wood veneer",
+  "Full-height storage / pantry",
+  "Bathroom vanities"
+]);
+const INSET_UPCHARGE = 1.12;
+
 /* Per-category description (what the price includes) + sell-side range per tier.
    Midpoints in CATEGORIES are the arithmetic center of these ranges. */
 const DETAILS = {
@@ -1028,6 +1068,7 @@ CATEGORIES.forEach(c=>{
   const d = DETAILS[c.name];
   if(d){ c.desc = d.desc; c.ranges = d.r; }
   c.matFixed = MAT_FIXED.has(c.name);
+  c.hasConstruction = CONSTRUCTION_CATS.has(c.name);
   c.shape = SHAPE_BY_NAME[c.name] || "box";
 });
 
@@ -1359,12 +1400,36 @@ function addLine(container){
   // Detail (what the selection includes)
   const detail = document.createElement("div");
   detail.className = "line-detail";
+
+  // Construction toggle — Frameless / Inset (+12%), shown only for cabinet categories
+  li.dataset.construction = "Frameless";
+  const constrRow = document.createElement("div");
+  constrRow.className = "ld-construction";
+  constrRow.style.display = "none";
+  const cLabel = document.createElement("span"); cLabel.className = "lc-label"; cLabel.textContent = "Construction";
+  const seg = document.createElement("div"); seg.className = "seg";
+  const bFrame = document.createElement("button"); bFrame.type = "button"; bFrame.className = "seg-btn active"; bFrame.textContent = "Frameless";
+  const bInset = document.createElement("button"); bInset.type = "button"; bInset.className = "seg-btn"; bInset.textContent = "Inset +12%";
+  seg.appendChild(bFrame); seg.appendChild(bInset);
+  constrRow.appendChild(cLabel); constrRow.appendChild(seg);
+
   const dDesc = document.createElement("span"); dDesc.className = "ld-desc";
   const dTier = document.createElement("span"); dTier.className = "ld-tier";
   const dNote = document.createElement("span"); dNote.className = "ld-note"; dNote.style.display = "none";
+  detail.appendChild(constrRow);
   detail.appendChild(dDesc);
   detail.appendChild(dTier);
   detail.appendChild(dNote);
+
+  function setConstruction(val){
+    li.dataset.construction = val;
+    bFrame.classList.toggle("active", val === "Frameless");
+    bInset.classList.toggle("active", val === "Inset");
+    li.dataset.override = "0";   // recompute at the new construction
+    recalcLine(li);
+  }
+  bFrame.addEventListener("click", ()=>setConstruction("Frameless"));
+  bInset.addEventListener("click", ()=>setConstruction("Inset"));
 
   li.appendChild(row);
   li.appendChild(detail);
@@ -1433,13 +1498,19 @@ function recalcLine(li){
   const bu = bandUnit(cat.unit);
   const override = li.dataset.override === "1";
 
+  // Construction: Inset runs a flat +12% over frameless (cabinet categories only)
+  const constrRow = li.querySelector(".ld-construction");
+  constrRow.style.display = cat.hasConstruction ? "" : "none";
+  const isInset = cat.hasConstruction && li.dataset.construction === "Inset";
+  const cMult = isInset ? INSET_UPCHARGE : 1;
+
   // Unit label inside the rate field
   li.querySelector(".rate-unit").textContent = rateUnitLabel(cat.unit);
 
   // Effective unit price:
-  //   auto  → tier midpoint scaled by region
+  //   auto  → tier midpoint scaled by region and construction
   //   custom→ the exact figure typed; regional modifier is NOT re-applied
-  const autoRate = mid * regionMod;
+  const autoRate = mid * regionMod * cMult;
   let effRate;
   if(override){
     effRate = parseFloat(rateInput.value) || 0;
@@ -1463,10 +1534,11 @@ function recalcLine(li){
   const def = tierDefFor(cat)[tier] || "";
 
   // Reference: sell band (where we have one) + the midpoint that drives the calc.
-  let ref = "midpoint " + fmt(autoRate) + bu + " · " + regionMod.toFixed(2) + "×";
+  const insetTag = isInset ? " · inset +12%" : "";
+  let ref = "midpoint " + fmt(autoRate) + bu + " · " + regionMod.toFixed(2) + "×" + insetTag;
   if(cat.ranges && cat.ranges[tier]){
-    const lo = cat.ranges[tier][0] * regionMod;
-    const hi = cat.ranges[tier][1] * regionMod;
+    const lo = cat.ranges[tier][0] * regionMod * cMult;
+    const hi = cat.ranges[tier][1] * regionMod * cMult;
     ref = "Sell band " + fmt(lo) + "–" + fmt(hi) + bu + " · " + ref;
   }
   const customNote = override
