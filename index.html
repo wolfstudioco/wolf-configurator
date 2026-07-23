@@ -752,9 +752,9 @@ const CATEGORIES = [
   {group:"Architectural Millwork", name:"Custom doors and frames", unit:"EA", tiers:{Economy:2000, Standard:3500, Premium:6250, "Ultra-premium":11500}},
   {group:"Architectural Millwork", name:"Trim and moldings", unit:"LF", tiers:{Economy:20, Standard:35, Premium:60, "Ultra-premium":112}},
 
-  {group:"Doors", name:"Interior swinging door", unit:"EA", tiers:{Economy:3000, Standard:3700, Premium:5000, "Ultra-premium":6300}},
-  {group:"Doors", name:"Exterior glass entry door", unit:"EA", tiers:{Economy:5200, Standard:6200, Premium:8200, "Ultra-premium":10200}},
-  {group:"Doors", name:"Exterior Shaker front door", unit:"EA", tiers:{Economy:4700, Standard:5700, Premium:7700, "Ultra-premium":9700}},
+  {group:"Doors", name:"Interior swinging door", unit:"EA", tiers:{Economy:3600, Standard:4300, Premium:5600, "Ultra-premium":6900}},
+  {group:"Doors", name:"Exterior glass entry door", unit:"EA", tiers:{Economy:5800, Standard:6800, Premium:8800, "Ultra-premium":10800}},
+  {group:"Doors", name:"Exterior Shaker front door", unit:"EA", tiers:{Economy:5300, Standard:6300, Premium:8300, "Ultra-premium":10300}},
 
   {group:"Hotel FF&E", name:"Full casegoods package", unit:"per room", tiers:{Economy:4500, Standard:7250, Premium:12000, "Ultra-premium":22500}},
   {group:"Hotel FF&E", name:"Headboard", unit:"EA", tiers:{Economy:900, Standard:1700, Premium:3350, "Ultra-premium":6750}},
@@ -870,14 +870,11 @@ const TIER_DEF_DOOR = {
   "Premium":"quarter-sawn white oak or ribbon-cut sapele — figured, grain-matched hardwoods.",
   "Ultra-premium":"black walnut or western red cedar — top-tier species."
 };
-/* Door size steps the price on top of the wood tier. */
+/* Door size steps the price on top of the wood tier.
+   Standard = 36″×84″×1¾″ (the tier price); tall and oversized step up. */
+const STD_DOOR_SIZE = "36″×84″×1¾″";
 const DOOR_SIZES = ["Standard","Tall","Oversized"];
 const SIZE_MULT = {"Standard":1.00, "Tall":1.15, "Oversized":1.30};
-const SIZE_NOTE = {
-  "Standard":"up to 36″ × 84″",
-  "Tall":"to 36″ × 96″ (8 ft)",
-  "Oversized":"42″+ wide or 8 ft+"
-};
 
 /* Contextual notes shown per category group. */
 const GROUP_NOTE = "Metalwork and upholstery sell prices reflect industry midpoints for boutique fabrication with premium finishes. Standard tier assumes hospitality contract-grade; premium and ultra-premium reflect designer-specified custom fabrication.";
@@ -945,9 +942,9 @@ const DETAILS = {
   "Bathroom vanities":{desc:"Vanity cabinet base with counter provision — doors, drawers, and plumbing accommodation. Per linear foot.", r:{Economy:[600,900],Standard:[900,1400],Premium:[1400,2200],"Ultra-premium":[2200,4000]}},
   "Custom doors and frames":{desc:"Architectural wood door and frame assemblies — solid-core or veneer, custom sizing, and hardware prep. Priced each.", r:{Economy:[1500,2500],Standard:[2500,4500],Premium:[4500,8000],"Ultra-premium":[8000,15000]}},
   "Trim and moldings":{desc:"Crown, base, casing, and applied moldings — material, milling, and installation. Per linear foot.", r:{Economy:[15,25],Standard:[25,45],Premium:[45,75],"Ultra-premium":[75,150]}},
-  "Interior swinging door":{desc:"Complete interior door system — solid-core double-panel Craftsman slab, pre-hung in a door-matched jamb with hinges, casing, and factory finish. Tier steps the wood species (maple standard); size adjusts on top. Lockset priced separately. Each.", r:{Economy:[2400,3600],Standard:[3000,4400],Premium:[4100,5900],"Ultra-premium":[5200,7400]}},
-  "Exterior glass entry door":{desc:"Complete exterior entry system — modern single-panel solid-core slab with an insulated glass lite, pre-hung in a weatherstripped door-matched jamb with hinges, sill, casing, and factory finish, machined for a deadbolt. Tier steps the wood species (maple standard); size adjusts on top. Lockset priced separately. Each.", r:{Economy:[4200,6200],Standard:[5200,7200],Premium:[7000,9400],"Ultra-premium":[8800,11600]}},
-  "Exterior Shaker front door":{desc:"Complete exterior front-entry system — solid-wood Shaker double-panel slab, pre-hung in a weatherstripped door-matched jamb with hinges, sill, casing, and factory finish, machined for a deadbolt. Tier steps the wood species (maple standard); size adjusts on top. Lockset priced separately. Each.", r:{Economy:[3900,5500],Standard:[4700,6700],Premium:[6500,8900],"Ultra-premium":[8200,11200]}},
+  "Interior swinging door":{desc:"Complete interior door system — solid-core double-panel Craftsman slab, pre-hung in a door-matched jamb with hinges, casing, and factory finish. Tier steps the wood species (maple standard); size adjusts on top. Lockset priced separately. Each.", r:{Economy:[3000,4200],Standard:[3600,5000],Premium:[4700,6500],"Ultra-premium":[5800,8000]}},
+  "Exterior glass entry door":{desc:"Complete exterior entry system — modern single-panel solid-core slab with an insulated glass lite, pre-hung in a weatherstripped door-matched jamb with hinges, sill, casing, and factory finish, machined for a deadbolt. Tier steps the wood species (maple standard); size adjusts on top. Lockset priced separately. Each.", r:{Economy:[4800,6800],Standard:[5800,7800],Premium:[7600,10000],"Ultra-premium":[9400,12200]}},
+  "Exterior Shaker front door":{desc:"Complete exterior front-entry system — solid-wood Shaker double-panel slab, pre-hung in a weatherstripped door-matched jamb with hinges, sill, casing, and factory finish, machined for a deadbolt. Tier steps the wood species (maple standard); size adjusts on top. Lockset priced separately. Each.", r:{Economy:[4500,6100],Standard:[5300,7300],Premium:[7100,9500],"Ultra-premium":[8800,11800]}},
 
   "Full casegoods package":{desc:"Complete guestroom casegoods set — headboard, nightstands, desk, dresser/media console, and luggage bench — coordinated and priced per room.", r:{Economy:[3500,5500],Standard:[5500,9000],Premium:[9000,15000],"Ultra-premium":[15000,30000]}},
   "Headboard":{desc:"Guestroom headboard — upholstered, wood, or mixed-material, wall-mounted or floor-anchored. Priced each.", r:{Economy:[600,1200],Standard:[1200,2200],Premium:[2200,4500],"Ultra-premium":[4500,9000]}},
@@ -1448,7 +1445,7 @@ function addLine(container){
   constrRow.appendChild(cLabel); constrRow.appendChild(seg);
 
   // Size toggle — Standard / Tall / Oversized, shown only for door categories
-  li.dataset.size = "Standard";
+  li.dataset.size = DOOR_SIZES[0];
   const sizeRow = document.createElement("div");
   sizeRow.className = "ld-construction ld-size";
   sizeRow.style.display = "none";
@@ -1569,7 +1566,7 @@ function recalcLine(li){
   const sizeRow = li.querySelector(".ld-size");
   const isDoor = cat.group === "Doors";
   sizeRow.style.display = isDoor ? "" : "none";
-  const sizeKey = li.dataset.size || "Standard";
+  const sizeKey = li.dataset.size || DOOR_SIZES[0];
   const sMult = isDoor ? (SIZE_MULT[sizeKey] || 1) : 1;
 
   // Unit label inside the rate field
@@ -1603,7 +1600,7 @@ function recalcLine(li){
 
   // Reference: sell band (where we have one) + the midpoint that drives the calc.
   const insetTag = isInset ? " · inset" : "";
-  const sizeTag = (isDoor && sizeKey !== "Standard") ? " · " + sizeKey.toLowerCase() : "";
+  const sizeTag = isDoor ? " · " + (sizeKey === "Standard" ? STD_DOOR_SIZE : sizeKey.toLowerCase()) : "";
   let ref = "midpoint " + fmt(autoRate) + bu + " · " + regionMod.toFixed(2) + "×" + insetTag + sizeTag;
   if(cat.ranges && cat.ranges[tier]){
     const lo = cat.ranges[tier][0] * regionMod * cMult * sMult;
