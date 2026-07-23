@@ -752,9 +752,9 @@ const CATEGORIES = [
   {group:"Architectural Millwork", name:"Custom doors and frames", unit:"EA", tiers:{Economy:2000, Standard:3500, Premium:6250, "Ultra-premium":11500}},
   {group:"Architectural Millwork", name:"Trim and moldings", unit:"LF", tiers:{Economy:20, Standard:35, Premium:60, "Ultra-premium":112}},
 
-  {group:"Doors", name:"Interior swinging door", unit:"EA", tiers:{Economy:1500, Standard:2400, Premium:3400, "Ultra-premium":5200}},
-  {group:"Doors", name:"Exterior glass entry door", unit:"EA", tiers:{Economy:2800, Standard:4800, Premium:6200, "Ultra-premium":8200}},
-  {group:"Doors", name:"Exterior Shaker front door", unit:"EA", tiers:{Economy:2700, Standard:4600, Premium:6000, "Ultra-premium":8000}},
+  {group:"Doors", name:"Interior swinging door", unit:"EA", tiers:{Economy:3000, Standard:3700, Premium:5000, "Ultra-premium":6300}},
+  {group:"Doors", name:"Exterior glass entry door", unit:"EA", tiers:{Economy:5200, Standard:6200, Premium:8200, "Ultra-premium":10200}},
+  {group:"Doors", name:"Exterior Shaker front door", unit:"EA", tiers:{Economy:4700, Standard:5700, Premium:7700, "Ultra-premium":9700}},
 
   {group:"Hotel FF&E", name:"Full casegoods package", unit:"per room", tiers:{Economy:4500, Standard:7250, Premium:12000, "Ultra-premium":22500}},
   {group:"Hotel FF&E", name:"Headboard", unit:"EA", tiers:{Economy:900, Standard:1700, Premium:3350, "Ultra-premium":6750}},
@@ -865,10 +865,10 @@ const TABLE_SHAPES = {tableRound:1, tableSquare:1, tableRect:1};
 
 /* Doors — the tier steps by wood species; size is a separate multiplier. */
 const TIER_DEF_DOOR = {
-  "Economy":"paint-grade or knotty softwoods — knotty alder, clear Douglas fir, tight-knot cedar, primed paint-grade. Value passage and entry doors.",
-  "Standard":"domestic hardwoods — plain- or knotty white oak, hickory, sapele mahogany, Spanish cedar. The everyday upper-mid door.",
-  "Premium":"select hardwoods — quarter-sawn white oak, cherry, black walnut, iroko, with grain-matching. Upper-scale residential.",
-  "Ultra-premium":"exotic and figured species — wenge, zebrawood, padauk, figured walnut. Statement doors."
+  "Economy":"pine or knotty softwoods — the paint-grade value species.",
+  "Standard":"maple — the standard species; clean, tight grain, paint- or clear-finished.",
+  "Premium":"quarter-sawn white oak or ribbon-cut sapele — figured, grain-matched hardwoods.",
+  "Ultra-premium":"black walnut or western red cedar — top-tier species."
 };
 /* Door size steps the price on top of the wood tier. */
 const DOOR_SIZES = ["Standard","Tall","Oversized"];
@@ -945,9 +945,9 @@ const DETAILS = {
   "Bathroom vanities":{desc:"Vanity cabinet base with counter provision — doors, drawers, and plumbing accommodation. Per linear foot.", r:{Economy:[600,900],Standard:[900,1400],Premium:[1400,2200],"Ultra-premium":[2200,4000]}},
   "Custom doors and frames":{desc:"Architectural wood door and frame assemblies — solid-core or veneer, custom sizing, and hardware prep. Priced each.", r:{Economy:[1500,2500],Standard:[2500,4500],Premium:[4500,8000],"Ultra-premium":[8000,15000]}},
   "Trim and moldings":{desc:"Crown, base, casing, and applied moldings — material, milling, and installation. Per linear foot.", r:{Economy:[15,25],Standard:[25,45],Premium:[45,75],"Ultra-premium":[75,150]}},
-  "Interior swinging door":{desc:"Interior swinging door — solid-core, double-panel Craftsman slab with pre-hung frame and jamb. Tier steps the wood species; size adjusts on top. Hardware priced separately. Each.", r:{Economy:[1100,1900],Standard:[1900,2900],Premium:[2800,4000],"Ultra-premium":[4200,6200]}},
-  "Exterior glass entry door":{desc:"Exterior entry door — modern single-panel solid-core slab with an insulated glass lite, weatherstripped frame and sill. Tier steps the wood species; size adjusts on top. Hardware priced separately. Each.", r:{Economy:[2000,3600],Standard:[3800,5800],Premium:[5200,7200],"Ultra-premium":[7000,9400]}},
-  "Exterior Shaker front door":{desc:"Exterior front door — solid-wood Shaker double-panel slab, weatherstripped frame and sill, no glass. Tier steps the wood species; size adjusts on top. Hardware priced separately. Each.", r:{Economy:[1900,3500],Standard:[3600,5600],Premium:[5000,7000],"Ultra-premium":[6800,9200]}},
+  "Interior swinging door":{desc:"Complete interior door system — solid-core double-panel Craftsman slab, pre-hung in a door-matched jamb with hinges, casing, and factory finish. Tier steps the wood species (maple standard); size adjusts on top. Lockset priced separately. Each.", r:{Economy:[2400,3600],Standard:[3000,4400],Premium:[4100,5900],"Ultra-premium":[5200,7400]}},
+  "Exterior glass entry door":{desc:"Complete exterior entry system — modern single-panel solid-core slab with an insulated glass lite, pre-hung in a weatherstripped door-matched jamb with hinges, sill, casing, and factory finish, machined for a deadbolt. Tier steps the wood species (maple standard); size adjusts on top. Lockset priced separately. Each.", r:{Economy:[4200,6200],Standard:[5200,7200],Premium:[7000,9400],"Ultra-premium":[8800,11600]}},
+  "Exterior Shaker front door":{desc:"Complete exterior front-entry system — solid-wood Shaker double-panel slab, pre-hung in a weatherstripped door-matched jamb with hinges, sill, casing, and factory finish, machined for a deadbolt. Tier steps the wood species (maple standard); size adjusts on top. Lockset priced separately. Each.", r:{Economy:[3900,5500],Standard:[4700,6700],Premium:[6500,8900],"Ultra-premium":[8200,11200]}},
 
   "Full casegoods package":{desc:"Complete guestroom casegoods set — headboard, nightstands, desk, dresser/media console, and luggage bench — coordinated and priced per room.", r:{Economy:[3500,5500],Standard:[5500,9000],Premium:[9000,15000],"Ultra-premium":[15000,30000]}},
   "Headboard":{desc:"Guestroom headboard — upholstered, wood, or mixed-material, wall-mounted or floor-anchored. Priced each.", r:{Economy:[600,1200],Standard:[1200,2200],Premium:[2200,4500],"Ultra-premium":[4500,9000]}},
