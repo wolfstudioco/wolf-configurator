@@ -752,7 +752,7 @@ const CATEGORIES = [
   {group:"Architectural Millwork", name:"Custom doors and frames", unit:"EA", tiers:{Economy:2000, Standard:3500, Premium:6250, "Ultra-premium":11500}},
   {group:"Architectural Millwork", name:"Trim and moldings", unit:"LF", tiers:{Economy:20, Standard:35, Premium:60, "Ultra-premium":112}},
 
-  {group:"Doors", name:"Interior swinging door", unit:"EA", tiers:{Economy:650, Standard:4300, Premium:5600, "Ultra-premium":6900}},
+  {group:"Doors", name:"Interior swinging door", unit:"EA", tiers:{Economy:650, Standard:2200, Premium:2900, "Ultra-premium":3300}},
   {group:"Doors", name:"Exterior glass entry door", unit:"EA", tiers:{Economy:1600, Standard:6800, Premium:8800, "Ultra-premium":10800}},
   {group:"Doors", name:"Exterior Shaker front door", unit:"EA", tiers:{Economy:1600, Standard:6300, Premium:8300, "Ultra-premium":10300}},
 
@@ -866,7 +866,7 @@ const TABLE_SHAPES = {tableRound:1, tableSquare:1, tableRect:1};
 /* Doors — the tier steps by wood species; size is a separate multiplier. */
 const TIER_DEF_DOOR = {
   "Economy":"pine — the value-grade option for budget openings.",
-  "Standard":"maple — the standard species; clean, tight grain, paint- or clear-finished.",
+  "Standard":"maple or white oak — the standard species; clean, tight grain, paint- or clear-finished.",
   "Premium":"quarter-sawn white oak or ribbon-cut sapele — figured, grain-matched hardwoods.",
   "Ultra-premium":"black walnut or western red cedar — top-tier species."
 };
@@ -942,7 +942,7 @@ const DETAILS = {
   "Bathroom vanities":{desc:"Vanity cabinet base with counter provision — doors, drawers, and plumbing accommodation. Per linear foot.", r:{Economy:[600,900],Standard:[900,1400],Premium:[1400,2200],"Ultra-premium":[2200,4000]}},
   "Custom doors and frames":{desc:"Architectural wood door and frame assemblies — solid-core or veneer, custom sizing, and hardware prep. Priced each.", r:{Economy:[1500,2500],Standard:[2500,4500],Premium:[4500,8000],"Ultra-premium":[8000,15000]}},
   "Trim and moldings":{desc:"Crown, base, casing, and applied moldings — material, milling, and installation. Per linear foot.", r:{Economy:[15,25],Standard:[25,45],Premium:[45,75],"Ultra-premium":[75,150]}},
-  "Interior swinging door":{desc:"Interior door system — Standard and up are a custom solid-core double-panel Craftsman slab, pre-hung in a door-matched jamb with hinges, casing, and factory finish; Economy is a value-grade prehung door. Tier steps the wood species (maple standard); size adjusts on top. Lockset priced separately. Each.", r:{Economy:[450,850],Standard:[3600,5000],Premium:[4700,6500],"Ultra-premium":[5800,8000]}},
+  "Interior swinging door":{desc:"Interior door system — Standard and up are a solid-wood 2-panel flat-panel Shaker slab, pre-hung in a solid-wood jamb, shop-sanded and finished; Economy is a value-grade prehung door. Tier steps the wood species (maple / white oak standard); size adjusts on top. Lockset priced separately. Each.", r:{Economy:[450,850],Standard:[1800,2600],Premium:[2400,3400],"Ultra-premium":[2800,3800]}},
   "Exterior glass entry door":{desc:"Exterior entry system — Standard and up are a custom single-panel solid-core slab with an insulated glass lite, pre-hung in a weatherstripped door-matched jamb with hinges, sill, casing, and factory finish, machined for a deadbolt; Economy is a value-grade prehung door. Tier steps the wood species (maple standard); size adjusts on top. Lockset priced separately. Each.", r:{Economy:[1200,2000],Standard:[5800,7800],Premium:[7600,10000],"Ultra-premium":[9400,12200]}},
   "Exterior Shaker front door":{desc:"Exterior front-entry system — Standard and up are a custom solid-wood Shaker double-panel slab, pre-hung in a weatherstripped door-matched jamb with hinges, sill, casing, and factory finish, machined for a deadbolt; Economy is a value-grade prehung door. Tier steps the wood species (maple standard); size adjusts on top. Lockset priced separately. Each.", r:{Economy:[1200,2000],Standard:[5300,7300],Premium:[7100,9500],"Ultra-premium":[8800,11800]}},
 
