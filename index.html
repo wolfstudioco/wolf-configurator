@@ -1409,7 +1409,7 @@ function addLine(container){
   const cLabel = document.createElement("span"); cLabel.className = "lc-label"; cLabel.textContent = "Construction";
   const seg = document.createElement("div"); seg.className = "seg";
   const bFrame = document.createElement("button"); bFrame.type = "button"; bFrame.className = "seg-btn active"; bFrame.textContent = "Frameless";
-  const bInset = document.createElement("button"); bInset.type = "button"; bInset.className = "seg-btn"; bInset.textContent = "Inset +12%";
+  const bInset = document.createElement("button"); bInset.type = "button"; bInset.className = "seg-btn"; bInset.textContent = "Inset";
   seg.appendChild(bFrame); seg.appendChild(bInset);
   constrRow.appendChild(cLabel); constrRow.appendChild(seg);
 
@@ -1534,7 +1534,7 @@ function recalcLine(li){
   const def = tierDefFor(cat)[tier] || "";
 
   // Reference: sell band (where we have one) + the midpoint that drives the calc.
-  const insetTag = isInset ? " · inset +12%" : "";
+  const insetTag = isInset ? " · inset" : "";
   let ref = "midpoint " + fmt(autoRate) + bu + " · " + regionMod.toFixed(2) + "×" + insetTag;
   if(cat.ranges && cat.ranges[tier]){
     const lo = cat.ranges[tier][0] * regionMod * cMult;
