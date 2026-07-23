@@ -572,17 +572,6 @@
     </div>
   </header>
 
-  <p class="note-lead">
-    Conceptual pricing for early-stage opportunities. Sell-side ranges based on 2026
-    industry midpoints. Install and freight priced separately.
-  </p>
-
-  <p class="note-tier no-print">
-    Tier reflects level of execution — hardware, detailing, and finish. Where a category
-    already names its material (e.g. plastic laminate, quartz), the tier steps up quality
-    <em>within</em> that material, not the material itself.
-  </p>
-
   <details class="tier-ref no-print">
     <summary>Tier reference</summary>
     <div id="tierRefBody"></div>
@@ -668,11 +657,11 @@ const CATEGORIES = [
   {group:"Hotel FF&E", name:"Closet system", unit:"per room", tiers:{Economy:800, Standard:1400, Premium:2400, "Ultra-premium":4250}},
   {group:"Hotel FF&E", name:"Bath vanity", unit:"per room", tiers:{Economy:1600, Standard:2750, Premium:4500, "Ultra-premium":7750}},
 
-  {group:"Restaurant / Retail", name:"Restaurant back-bar millwork", unit:"LF", tiers:{Economy:2750, Standard:4750, Premium:9000}},
-  {group:"Restaurant / Retail", name:"Server stations", unit:"LF", tiers:{Economy:4000, Standard:6750, Premium:11750}},
+  {group:"Restaurant / Retail", name:"Restaurant back-bar millwork", unit:"LF", tiers:{Economy:1200, Standard:2200, Premium:3800}},
+  {group:"Restaurant / Retail", name:"Server stations", unit:"LF", tiers:{Economy:800, Standard:1400, Premium:2500}},
   {group:"Restaurant / Retail", name:"Retail wall display units", unit:"LF", tiers:{Economy:200, Standard:350, Premium:625}},
-  {group:"Restaurant / Retail", name:"Retail island fixtures", unit:"EA", tiers:{Economy:3000, Standard:5750, Premium:11250}},
-  {group:"Restaurant / Retail", name:"Cash wrap / point of sale", unit:"LF", tiers:{Economy:3500, Standard:6250, Premium:11500}},
+  {group:"Restaurant / Retail", name:"Retail island fixtures", unit:"EA", tiers:{Economy:2500, Standard:4500, Premium:8500}},
+  {group:"Restaurant / Retail", name:"Cash wrap / point of sale", unit:"LF", tiers:{Economy:1200, Standard:2200, Premium:4000}},
 
   {group:"Metalwork", name:"Powder-coated steel, decorative panels", unit:"SF", tiers:{Economy:45, Standard:75, Premium:125, "Ultra-premium":225}},
   {group:"Metalwork", name:"Powder-coated steel, structural / frames", unit:"LF", tiers:{Economy:65, Standard:110, Premium:175, "Ultra-premium":300}},
@@ -728,14 +717,14 @@ const TIER_ORDER = ["Economy","Standard","Premium","Ultra-premium"];
    reflects hardware, detailing, and finish grade, NOT a material change. */
 const TIER_DEF_OPEN = {
   "Economy":"plastic laminate / melamine, standard hardware, off-the-shelf finishes, minimal detail — value-engineered, budget-driven work.",
-  "Standard":"laminate with veneer accents, mid-tier hardware (Blum, Grass), consistent finish — where most hotel FF&E and commercial casework lands.",
-  "Premium":"real wood veneers, quality hardware (Blum Aventos, Salice), matched grain, detailed craftsmanship — upper-scale hospitality, boutique retail, flagship restaurant.",
+  "Standard":"laminate with veneer accents, mid-tier soft-close hardware, consistent finish — where most hotel FF&E and commercial casework lands.",
+  "Premium":"real wood veneers, quality concealed hardware, matched grain, detailed craftsmanship — upper-scale hospitality, boutique retail, flagship restaurant.",
   "Ultra-premium":"solid hardwood, sculpted details, mixed-material construction (wood + brass + stone), custom hardware — luxury hospitality, high-end restaurants, HNW residential."
 };
 const TIER_DEF_FIXED = {
   "Economy":"standard hardware, off-the-shelf finishes, basic profiles, minimal detail — value-engineered within the selected material.",
-  "Standard":"mid-tier hardware (Blum, Grass), consistent finish, modest detailing and edge/seam work — where most commercial work lands.",
-  "Premium":"quality hardware (Blum Aventos, Salice), matched faces/seams, refined profiles, elevated finish and craftsmanship.",
+  "Standard":"mid-tier soft-close hardware, consistent finish, modest detailing and edge/seam work — where most commercial work lands.",
+  "Premium":"quality concealed hardware, matched faces/seams, refined profiles, elevated finish and craftsmanship.",
   "Ultra-premium":"top-tier and custom hardware, sculpted details, exacting seams and finishes — luxury execution within the selected material."
 };
 const TIER_DEF_METAL = {
@@ -751,33 +740,33 @@ const TIER_DEF_UPHOLSTERY = {
   "Ultra-premium":"luxury textile allowance ($200+/yd COM incl. leathers, mohair, silk), fully hand-built construction, custom nailhead detailing — heirloom-grade."
 };
 
-/* Restaurant furniture (Grand Rapids Chair list). Table tiers = top material; chair tiers = line level. */
-const TIER_DEF_GRC_TABLE = {
-  "Economy":"laminate top with vinyl T-mold edge, on a Grand Rapids Chair cast-iron pedestal (round/square) or steel trestle base (rectangular).",
-  "Standard":"premium laminate top with wood-look overlay edge, GRC pedestal / trestle base.",
-  "Premium":"solid maple top, GRC pedestal / trestle base — the classic commercial wood table.",
-  "Ultra-premium":"solid walnut / mixed-hardwood top, GRC pedestal / trestle base — top-tier species."
+/* Restaurant furniture. Table tiers = top material; chair tiers = line level. */
+const TIER_DEF_REST_TABLE = {
+  "Economy":"laminate top with vinyl T-mold edge, on a cast-iron pedestal (round/square) or steel trestle base (rectangular).",
+  "Standard":"premium laminate top with wood-look overlay edge, pedestal / trestle base.",
+  "Premium":"solid maple top, pedestal / trestle base — the classic commercial wood table.",
+  "Ultra-premium":"solid walnut / mixed-hardwood top, pedestal / trestle base — top-tier species."
 };
-const TIER_DEF_GRC_SEAT = {
-  "Economy":"steel-base chair with wood seat (Felix Jr. class) — value commercial dining.",
-  "Standard":"steel-base four-leg chair (Harper class) — hospitality contract-grade.",
-  "Premium":"solid-wood chair (Brooke class) — upper-scale dining.",
-  "Ultra-premium":"fully upholstered solid-wood chair (Alfred Wood — European beech, CAL 117) — luxury dining."
+const TIER_DEF_REST_SEAT = {
+  "Economy":"steel-base chair with a wood seat — value commercial dining.",
+  "Standard":"steel-base four-leg chair — hospitality contract-grade.",
+  "Premium":"solid-wood chair — upper-scale dining.",
+  "Ultra-premium":"fully upholstered solid-wood chair (European beech, CAL 117) — luxury dining."
 };
 const TABLE_SHAPES = {tableRound:1, tableSquare:1, tableRect:1};
 
 /* Contextual notes shown per category group. */
 const GROUP_NOTE = "Metalwork and upholstery sell prices reflect industry midpoints for boutique fabrication with premium finishes. Standard tier assumes hospitality contract-grade; premium and ultra-premium reflect designer-specified custom fabrication.";
-const GRC_NOTE = "Grand Rapids Chair (Byron Center, MI) — March 2026 list pricing. Table tiers step the top material: laminate → premium laminate → solid maple → solid walnut, on a cast-iron pedestal (round/square) or steel trestle base (rectangular). List ≈ end-client sell; your margin is the dealer discount.";
-const GROUP_NOTES = {"Metalwork":GROUP_NOTE, "Upholstery":GROUP_NOTE, "Restaurant Furniture":GRC_NOTE};
+const REST_NOTE = "Restaurant furniture at 2026 commercial contract pricing. Table tiers step the top material: laminate → premium laminate → solid maple → solid walnut, on a cast-iron pedestal (round/square) or steel trestle base (rectangular).";
+const GROUP_NOTES = {"Metalwork":GROUP_NOTE, "Upholstery":GROUP_NOTE, "Restaurant Furniture":REST_NOTE};
 
 /* Pick the right tier-definition set for a category. */
 function tierDefFor(cat){
   if(cat.group === "Metalwork") return TIER_DEF_METAL;
   if(cat.group === "Upholstery") return TIER_DEF_UPHOLSTERY;
   if(cat.group === "Restaurant Furniture"){
-    if(TABLE_SHAPES[cat.shape]) return TIER_DEF_GRC_TABLE;
-    if(cat.shape === "chair") return TIER_DEF_GRC_SEAT;
+    if(TABLE_SHAPES[cat.shape]) return TIER_DEF_REST_TABLE;
+    if(cat.shape === "chair") return TIER_DEF_REST_SEAT;
     return TIER_DEF_UPHOLSTERY;
   }
   return cat.matFixed ? TIER_DEF_FIXED : TIER_DEF_OPEN;
@@ -807,7 +796,7 @@ const DETAILS = {
   "Bar / cafe millwork":{desc:"Front- and back-bar millwork — die wall, bar top, under-bar cabinetry, and glass/bottle storage. Millwork only — excludes plumbing, refrigeration, and equipment. Per linear foot (recalibrated 2026).", r:{Economy:[1000,2000],Standard:[2000,3500],Premium:[3500,5500],"Ultra-premium":[5500,8500]}},
   "Feature walls / paneling":{desc:"Decorative wall paneling — wood, slat, upholstered, or mixed-material feature surfaces. Priced per square foot of face.", r:{Economy:[75,125],Standard:[125,225],Premium:[225,400],"Ultra-premium":[400,800]}},
   "Ceiling systems, wood":{desc:"Applied or suspended wood ceiling — slats, planks, coffers, or baffles. Per square foot of ceiling coverage.", r:{Economy:[60,100],Standard:[100,175],Premium:[175,300],"Ultra-premium":[300,500]}},
-  "Countertops, solid surface":{desc:"Seamless acrylic solid-surface tops (Corian-type) — fabrication, edge profile, and optional integral sinks. Per square foot.", r:{Economy:[85,125],Standard:[125,175],Premium:[175,250],"Ultra-premium":[250,400]}},
+  "Countertops, solid surface":{desc:"Seamless acrylic solid-surface tops — fabrication, edge profile, and optional integral sinks. Per square foot.", r:{Economy:[85,125],Standard:[125,175],Premium:[175,250],"Ultra-premium":[250,400]}},
   "Countertops, quartz":{desc:"Engineered quartz slab tops — fabrication, edging, cutouts, install-ready. Per square foot.", r:{Economy:[95,140],Standard:[140,200],Premium:[200,300],"Ultra-premium":[300,500]}},
   "Countertops, stone":{desc:"Natural granite or marble slab tops — fabrication, edge profile, sealing, and cutouts. Per square foot.", r:{Economy:[125,200],Standard:[200,350],Premium:[350,600],"Ultra-premium":[600,1200]}},
   "Bathroom vanities":{desc:"Vanity cabinet base with counter provision — doors, drawers, and plumbing accommodation. Per linear foot.", r:{Economy:[600,900],Standard:[900,1400],Premium:[1400,2200],"Ultra-premium":[2200,4000]}},
@@ -823,11 +812,11 @@ const DETAILS = {
   "Closet system":{desc:"Guestroom closet or wardrobe — hanging, shelving, open or doored, with safe/minibar provision. Per room.", r:{Economy:[600,1000],Standard:[1000,1800],Premium:[1800,3000],"Ultra-premium":[3000,5500]}},
   "Bath vanity":{desc:"Guestroom bath vanity — cabinet, counter, and integrated or vessel-sink provision. Per room.", r:{Economy:[1200,2000],Standard:[2000,3500],Premium:[3500,5500],"Ultra-premium":[5500,10000]}},
 
-  "Restaurant back-bar millwork":{desc:"Back-bar display and service millwork — bottle and glass storage, lit shelving, and die wall. Per linear foot.", r:{Economy:[2000,3500],Standard:[3500,6000],Premium:[6000,12000]}},
-  "Server stations":{desc:"Service and POS stations — landing surface, storage, dish/glass staging, and cable management. Per linear foot.", r:{Economy:[3000,5000],Standard:[5000,8500],Premium:[8500,15000]}},
+  "Restaurant back-bar millwork":{desc:"Back-bar display and service millwork — bottle and glass storage, lit shelving, and die wall. Per linear foot.", r:{Economy:[900,1500],Standard:[1500,2900],Premium:[2900,4700]}},
+  "Server stations":{desc:"Service and POS stations — landing surface, storage, dish/glass staging, and cable management. Per linear foot.", r:{Economy:[500,1100],Standard:[1100,1700],Premium:[1700,3300]}},
   "Retail wall display units":{desc:"Perimeter wall display systems — shelving, standards, and integrated lighting provision. Per linear foot.", r:{Economy:[150,250],Standard:[250,450],Premium:[450,800]}},
-  "Retail island fixtures":{desc:"Freestanding floor merchandising fixtures and gondolas — display surfaces over a storage base. Priced each.", r:{Economy:[2000,4000],Standard:[4000,7500],Premium:[7500,15000]}},
-  "Cash wrap / point of sale":{desc:"Checkout counter / cash wrap — transaction top, register cutout, customer-facing panel, and storage. Per linear foot.", r:{Economy:[2500,4500],Standard:[4500,8000],Premium:[8000,15000]}},
+  "Retail island fixtures":{desc:"Freestanding floor merchandising fixtures and gondolas — display surfaces over a storage base. Priced each.", r:{Economy:[1500,3500],Standard:[3500,5500],Premium:[5500,11500]}},
+  "Cash wrap / point of sale":{desc:"Checkout counter / cash wrap — transaction top, register cutout, customer-facing panel, and storage. Per linear foot.", r:{Economy:[800,1600],Standard:[1600,2800],Premium:[2800,5200]}},
 
   "Powder-coated steel, decorative panels":{desc:"Fabricated steel decorative panels — laser-cut or formed, powder-coated. Screens, partitions, feature facing. Per square foot of face."},
   "Powder-coated steel, structural / frames":{desc:"Structural steel framing — tube/angle, welded and powder-coated. Table bases, shelving armatures, canopies. Per linear foot."},
@@ -857,20 +846,20 @@ const DETAILS = {
   "Drapery, custom (per pair of panels)":{desc:"Custom drapery — fabricated panels, lining, and headings; labor and workroom. Priced per pair of panels."},
   "Roman shades, custom":{desc:"Custom Roman shades — fabricated, lined, and mounted. Priced each."},
 
-  "Dining chair":{desc:"Commercial restaurant dining chair (Grand Rapids Chair). Tiers span the line — steel-base wood-seat (Felix Jr.) up to fully upholstered solid wood (Alfred Wood). Priced each."},
-  "Banquette / booth seating":{desc:"Custom upholstered banquette / booth seating — frame, foam, and textile over a fixed base. Per linear foot. (Custom-upholstery estimate — GRC doesn't catalog banquettes.)"},
-  "Round table, 24\" (pedestal)":{desc:"Round dining table, 24\" diameter, on a Grand Rapids Chair cast-iron pedestal base (Orbit). Seats 2. Priced each."},
-  "Round table, 30\" (pedestal)":{desc:"Round dining table, 30\" diameter, GRC cast-iron pedestal (Orbit). Seats 2–3. Priced each."},
-  "Round table, 36\" (pedestal)":{desc:"Round dining table, 36\" diameter, GRC cast-iron pedestal (Orbit). Seats 4. Priced each."},
-  "Round table, 42\" (pedestal)":{desc:"Round dining table, 42\" diameter, GRC cast-iron pedestal (Orbit). Seats 4–5. Priced each."},
-  "Square table, 24\" (pedestal)":{desc:"Square dining table, 24×24\", GRC cast-iron pedestal (Orbit). Seats 2. Priced each."},
-  "Square table, 30\" (pedestal)":{desc:"Square dining table, 30×30\", GRC cast-iron pedestal (Orbit). Seats 4. Priced each."},
-  "Square table, 36\" (pedestal)":{desc:"Square dining table, 36×36\", GRC cast-iron pedestal (Orbit). Seats 4. Priced each."},
-  "Square table, 42\" (pedestal)":{desc:"Square dining table, 42×42\", GRC cast-iron pedestal (Orbit). Seats 4–8. Priced each."},
-  "Rectangular table, 24×48\" (trestle)":{desc:"Rectangular dining table, 24×48\", on a GRC steel trestle (T-base, Spartan). Seats 4. Priced each."},
-  "Rectangular table, 30×48\" (trestle)":{desc:"Rectangular dining table, 30×48\", GRC steel trestle (T-base, Spartan). Seats 4. Priced each."},
-  "Rectangular table, 30×60\" (trestle)":{desc:"Rectangular dining table, 30×60\", GRC steel trestle (T-base, Spartan). Seats 6. Priced each."},
-  "Rectangular table, 30×72\" (trestle)":{desc:"Rectangular dining table, 30×72\", GRC steel trestle (T-base, Spartan). Seats 6–8. Priced each."}
+  "Dining chair":{desc:"Commercial restaurant dining chair. Tiers span the line — steel-base wood-seat up to fully upholstered solid wood. Priced each."},
+  "Banquette / booth seating":{desc:"Custom upholstered banquette / booth seating — frame, foam, and textile over a fixed base. Per linear foot."},
+  "Round table, 24\" (pedestal)":{desc:"Round dining table, 24\" diameter, on a cast-iron pedestal base. Seats 2. Priced each."},
+  "Round table, 30\" (pedestal)":{desc:"Round dining table, 30\" diameter, cast-iron pedestal base. Seats 2–3. Priced each."},
+  "Round table, 36\" (pedestal)":{desc:"Round dining table, 36\" diameter, cast-iron pedestal base. Seats 4. Priced each."},
+  "Round table, 42\" (pedestal)":{desc:"Round dining table, 42\" diameter, cast-iron pedestal base. Seats 4–5. Priced each."},
+  "Square table, 24\" (pedestal)":{desc:"Square dining table, 24×24\", cast-iron pedestal base. Seats 2. Priced each."},
+  "Square table, 30\" (pedestal)":{desc:"Square dining table, 30×30\", cast-iron pedestal base. Seats 4. Priced each."},
+  "Square table, 36\" (pedestal)":{desc:"Square dining table, 36×36\", cast-iron pedestal base. Seats 4. Priced each."},
+  "Square table, 42\" (pedestal)":{desc:"Square dining table, 42×42\", cast-iron pedestal base. Seats 4–8. Priced each."},
+  "Rectangular table, 24×48\" (trestle)":{desc:"Rectangular dining table, 24×48\", on a steel trestle base. Seats 4. Priced each."},
+  "Rectangular table, 30×48\" (trestle)":{desc:"Rectangular dining table, 30×48\", steel trestle base. Seats 4. Priced each."},
+  "Rectangular table, 30×60\" (trestle)":{desc:"Rectangular dining table, 30×60\", steel trestle base. Seats 6. Priced each."},
+  "Rectangular table, 30×72\" (trestle)":{desc:"Rectangular dining table, 30×72\", steel trestle base. Seats 6–8. Priced each."}
 };
 
 /* Merge descriptions + ranges into the category records. */
