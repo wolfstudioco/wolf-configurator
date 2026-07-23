@@ -734,10 +734,10 @@ const REGIONS = [
 
 /* Each category: unit + tier midpoints. Restaurant/retail has no ultra tier. */
 const CATEGORIES = [
-  {group:"Architectural Millwork", name:"Base cabinets, plastic laminate", unit:"LF", tiers:{Economy:300, Standard:425, Premium:625, "Ultra-premium":975}},
+  {group:"Architectural Millwork", name:"Base cabinets, laminate", unit:"LF", tiers:{Economy:300, Standard:425, Premium:625, "Ultra-premium":975}},
   {group:"Architectural Millwork", name:"Base cabinets, painted", unit:"LF", tiers:{Economy:435, Standard:615, Premium:910, "Ultra-premium":1450}},
   {group:"Architectural Millwork", name:"Base cabinets, wood veneer", unit:"LF", tiers:{Economy:475, Standard:675, Premium:1000, "Ultra-premium":1600}},
-  {group:"Architectural Millwork", name:"Wall cabinets, plastic laminate", unit:"LF", tiers:{Economy:215, Standard:315, Premium:465, "Ultra-premium":725}},
+  {group:"Architectural Millwork", name:"Wall cabinets, laminate", unit:"LF", tiers:{Economy:215, Standard:315, Premium:465, "Ultra-premium":725}},
   {group:"Architectural Millwork", name:"Wall cabinets, painted", unit:"LF", tiers:{Economy:310, Standard:455, Premium:680, "Ultra-premium":1090}},
   {group:"Architectural Millwork", name:"Wall cabinets, wood veneer", unit:"LF", tiers:{Economy:340, Standard:500, Premium:750, "Ultra-premium":1200}},
   {group:"Architectural Millwork", name:"Full-height storage / pantry", unit:"LF", tiers:{Economy:600, Standard:850, Premium:1250, "Ultra-premium":2000}},
@@ -751,6 +751,10 @@ const CATEGORIES = [
   {group:"Architectural Millwork", name:"Bathroom vanities", unit:"LF", tiers:{Economy:750, Standard:1150, Premium:1800, "Ultra-premium":3100}},
   {group:"Architectural Millwork", name:"Custom doors and frames", unit:"EA", tiers:{Economy:2000, Standard:3500, Premium:6250, "Ultra-premium":11500}},
   {group:"Architectural Millwork", name:"Trim and moldings", unit:"LF", tiers:{Economy:20, Standard:35, Premium:60, "Ultra-premium":112}},
+
+  {group:"Doors", name:"Interior swinging door", unit:"EA", tiers:{Economy:1500, Standard:2400, Premium:3400, "Ultra-premium":5200}},
+  {group:"Doors", name:"Exterior glass entry door", unit:"EA", tiers:{Economy:2800, Standard:4800, Premium:6200, "Ultra-premium":8200}},
+  {group:"Doors", name:"Exterior Shaker front door", unit:"EA", tiers:{Economy:2700, Standard:4600, Premium:6000, "Ultra-premium":8000}},
 
   {group:"Hotel FF&E", name:"Full casegoods package", unit:"per room", tiers:{Economy:4500, Standard:7250, Premium:12000, "Ultra-premium":22500}},
   {group:"Hotel FF&E", name:"Headboard", unit:"EA", tiers:{Economy:900, Standard:1700, Premium:3350, "Ultra-premium":6750}},
@@ -816,11 +820,11 @@ const TIER_ORDER = ["Economy","Standard","Premium","Ultra-premium"];
 /* What each tier means — helps choose the right column.
    Tier meaning depends on whether the category already fixes its material by name.
    MATERIAL-OPEN categories (reception desks, casegoods, headboards, etc.) step up in
-   material across tiers. MATERIAL-FIXED categories (plastic laminate, wood veneer,
+   material across tiers. MATERIAL-FIXED categories (laminate, wood veneer,
    solid surface, quartz, stone, wood ceilings) hold their material — the tier then
    reflects hardware, detailing, and finish grade, NOT a material change. */
 const TIER_DEF_OPEN = {
-  "Economy":"plastic laminate / melamine, standard hardware, off-the-shelf finishes, minimal detail — value-engineered, budget-driven work.",
+  "Economy":"laminate / melamine, standard hardware, off-the-shelf finishes, minimal detail — value-engineered, budget-driven work.",
   "Standard":"laminate with veneer accents, mid-tier soft-close hardware, consistent finish — where most hotel FF&E and commercial casework lands.",
   "Premium":"real wood veneers, quality concealed hardware, matched grain, detailed craftsmanship — upper-scale hospitality, boutique retail, flagship restaurant.",
   "Ultra-premium":"solid hardwood, sculpted details, mixed-material construction (wood + brass + stone), custom hardware — luxury hospitality, high-end restaurants, HNW residential."
@@ -859,6 +863,22 @@ const TIER_DEF_REST_SEAT = {
 };
 const TABLE_SHAPES = {tableRound:1, tableSquare:1, tableRect:1};
 
+/* Doors — the tier steps by wood species; size is a separate multiplier. */
+const TIER_DEF_DOOR = {
+  "Economy":"paint-grade or knotty softwoods — knotty alder, clear Douglas fir, tight-knot cedar, primed paint-grade. Value passage and entry doors.",
+  "Standard":"domestic hardwoods — plain- or knotty white oak, hickory, sapele mahogany, Spanish cedar. The everyday upper-mid door.",
+  "Premium":"select hardwoods — quarter-sawn white oak, cherry, black walnut, iroko, with grain-matching. Upper-scale residential.",
+  "Ultra-premium":"exotic and figured species — wenge, zebrawood, padauk, figured walnut. Statement doors."
+};
+/* Door size steps the price on top of the wood tier. */
+const DOOR_SIZES = ["Standard","Tall","Oversized"];
+const SIZE_MULT = {"Standard":1.00, "Tall":1.15, "Oversized":1.30};
+const SIZE_NOTE = {
+  "Standard":"up to 36″ × 84″",
+  "Tall":"to 36″ × 96″ (8 ft)",
+  "Oversized":"42″+ wide or 8 ft+"
+};
+
 /* Contextual notes shown per category group. */
 const GROUP_NOTE = "Metalwork and upholstery sell prices reflect industry midpoints for boutique fabrication with premium finishes. Standard tier assumes hospitality contract-grade; premium and ultra-premium reflect designer-specified custom fabrication.";
 const REST_NOTE = "Restaurant furniture at 2026 commercial contract pricing. Table tiers step the top material: laminate → premium laminate → solid maple → solid walnut, on a pedestal base (round/square) or steel trestle base (rectangular).";
@@ -866,6 +886,7 @@ const GROUP_NOTES = {"Metalwork":GROUP_NOTE, "Upholstery":GROUP_NOTE, "Restauran
 
 /* Pick the right tier-definition set for a category. */
 function tierDefFor(cat){
+  if(cat.group === "Doors") return TIER_DEF_DOOR;
   if(cat.group === "Metalwork") return TIER_DEF_METAL;
   if(cat.group === "Upholstery") return TIER_DEF_UPHOLSTERY;
   if(cat.group === "Restaurant Furniture"){
@@ -878,10 +899,10 @@ function tierDefFor(cat){
 
 /* Categories whose material is fixed by their name — tiers step up execution, not material. */
 const MAT_FIXED = new Set([
-  "Base cabinets, plastic laminate",
+  "Base cabinets, laminate",
   "Base cabinets, painted",
   "Base cabinets, wood veneer",
-  "Wall cabinets, plastic laminate",
+  "Wall cabinets, laminate",
   "Wall cabinets, painted",
   "Wall cabinets, wood veneer",
   "Countertops, solid surface",
@@ -893,10 +914,10 @@ const MAT_FIXED = new Set([
 /* Door-front casework where frameless vs. inset is a real construction choice.
    Inset (flush inset face frame) runs a flat +12% over frameless. */
 const CONSTRUCTION_CATS = new Set([
-  "Base cabinets, plastic laminate",
+  "Base cabinets, laminate",
   "Base cabinets, painted",
   "Base cabinets, wood veneer",
-  "Wall cabinets, plastic laminate",
+  "Wall cabinets, laminate",
   "Wall cabinets, painted",
   "Wall cabinets, wood veneer",
   "Full-height storage / pantry",
@@ -907,10 +928,10 @@ const INSET_UPCHARGE = 1.12;
 /* Per-category description (what the price includes) + sell-side range per tier.
    Midpoints in CATEGORIES are the arithmetic center of these ranges. */
 const DETAILS = {
-  "Base cabinets, plastic laminate":{desc:"Floor-mounted base cabinetry, plastic-laminate faced over an MDF/particleboard core — doors, drawers, adjustable shelving, and standard hardware. Priced per linear foot of cabinet run.", r:{Economy:[250,350],Standard:[350,500],Premium:[500,750],"Ultra-premium":[750,1200]}},
+  "Base cabinets, laminate":{desc:"Floor-mounted base cabinetry, laminate-faced over an MDF/particleboard core — doors, drawers, adjustable shelving, and standard hardware. Priced per linear foot of cabinet run.", r:{Economy:[250,350],Standard:[350,500],Premium:[500,750],"Ultra-premium":[750,1200]}},
   "Base cabinets, painted":{desc:"Floor-mounted base cabinetry with painted paint-grade maple / moisture-resistant MDF fronts over a plywood box — doors, drawers, soft-close hardware, hand-finished paint. High-end residential frameless or inset. Per linear foot of run (sits just below wood veneer).", r:{Economy:[365,505],Standard:[500,730],Premium:[730,1090],"Ultra-premium":[1090,1810]}},
   "Base cabinets, wood veneer":{desc:"Floor-mounted base cabinetry faced in real wood veneer over an MDF/ply core — doors, drawers, hardware, with grain-matching at upper tiers. Per linear foot of run.", r:{Economy:[400,550],Standard:[550,800],Premium:[800,1200],"Ultra-premium":[1200,2000]}},
-  "Wall cabinets, plastic laminate":{desc:"Wall-hung upper cabinetry, laminate-faced — doors, adjustable shelving, and concealed hinges. Priced per linear foot.", r:{Economy:[180,250],Standard:[250,380],Premium:[380,550],"Ultra-premium":[550,900]}},
+  "Wall cabinets, laminate":{desc:"Wall-hung upper cabinetry, laminate-faced — doors, adjustable shelving, and concealed hinges. Priced per linear foot.", r:{Economy:[180,250],Standard:[250,380],Premium:[380,550],"Ultra-premium":[550,900]}},
   "Wall cabinets, painted":{desc:"Wall-hung upper cabinetry with painted maple / MDF fronts — doors, adjustable shelving, and soft-close hardware. High-end residential. Per linear foot (sits just below wood veneer).", r:{Economy:[250,370],Standard:[360,550],Premium:[550,810],"Ultra-premium":[810,1370]}},
   "Wall cabinets, wood veneer":{desc:"Wall-hung upper cabinetry in real wood veneer — doors, shelving, and soft-close hardware. Per linear foot.", r:{Economy:[280,400],Standard:[400,600],Premium:[600,900],"Ultra-premium":[900,1500]}},
   "Full-height storage / pantry":{desc:"Floor-to-ceiling tall storage and pantry units — doors, interior shelving and pull-outs, full-extension slides. Per linear foot.", r:{Economy:[500,700],Standard:[700,1000],Premium:[1000,1500],"Ultra-premium":[1500,2500]}},
@@ -924,6 +945,9 @@ const DETAILS = {
   "Bathroom vanities":{desc:"Vanity cabinet base with counter provision — doors, drawers, and plumbing accommodation. Per linear foot.", r:{Economy:[600,900],Standard:[900,1400],Premium:[1400,2200],"Ultra-premium":[2200,4000]}},
   "Custom doors and frames":{desc:"Architectural wood door and frame assemblies — solid-core or veneer, custom sizing, and hardware prep. Priced each.", r:{Economy:[1500,2500],Standard:[2500,4500],Premium:[4500,8000],"Ultra-premium":[8000,15000]}},
   "Trim and moldings":{desc:"Crown, base, casing, and applied moldings — material, milling, and installation. Per linear foot.", r:{Economy:[15,25],Standard:[25,45],Premium:[45,75],"Ultra-premium":[75,150]}},
+  "Interior swinging door":{desc:"Interior swinging door — solid-core, double-panel Craftsman slab with pre-hung frame and jamb. Tier steps the wood species; size adjusts on top. Hardware priced separately. Each.", r:{Economy:[1100,1900],Standard:[1900,2900],Premium:[2800,4000],"Ultra-premium":[4200,6200]}},
+  "Exterior glass entry door":{desc:"Exterior entry door — modern single-panel solid-core slab with an insulated glass lite, weatherstripped frame and sill. Tier steps the wood species; size adjusts on top. Hardware priced separately. Each.", r:{Economy:[2000,3600],Standard:[3800,5800],Premium:[5200,7200],"Ultra-premium":[7000,9400]}},
+  "Exterior Shaker front door":{desc:"Exterior front door — solid-wood Shaker double-panel slab, weatherstripped frame and sill, no glass. Tier steps the wood species; size adjusts on top. Hardware priced separately. Each.", r:{Economy:[1900,3500],Standard:[3600,5600],Premium:[5000,7000],"Ultra-premium":[6800,9200]}},
 
   "Full casegoods package":{desc:"Complete guestroom casegoods set — headboard, nightstands, desk, dresser/media console, and luggage bench — coordinated and priced per room.", r:{Economy:[3500,5500],Standard:[5500,9000],Premium:[9000,15000],"Ultra-premium":[15000,30000]}},
   "Headboard":{desc:"Guestroom headboard — upholstered, wood, or mixed-material, wall-mounted or floor-anchored. Priced each.", r:{Economy:[600,1200],Standard:[1200,2200],Premium:[2200,4500],"Ultra-premium":[4500,9000]}},
@@ -987,10 +1011,10 @@ const DETAILS = {
 /* Merge descriptions + ranges into the category records. */
 /* Schematic shape per category (drives the per-line visualizer). */
 const SHAPE_BY_NAME = {
-  "Base cabinets, plastic laminate":"baseCab",
+  "Base cabinets, laminate":"baseCab",
   "Base cabinets, painted":"baseCab",
   "Base cabinets, wood veneer":"baseCab",
-  "Wall cabinets, plastic laminate":"wallCab",
+  "Wall cabinets, laminate":"wallCab",
   "Wall cabinets, painted":"wallCab",
   "Wall cabinets, wood veneer":"wallCab",
   "Full-height storage / pantry":"tall",
@@ -1004,6 +1028,10 @@ const SHAPE_BY_NAME = {
   "Bathroom vanities":"vanity",
   "Custom doors and frames":"door",
   "Trim and moldings":"trim",
+
+  "Interior swinging door":"doorPanel",
+  "Exterior glass entry door":"doorGlass",
+  "Exterior Shaker front door":"doorShaker",
 
   "Full casegoods package":"casegoods",
   "Headboard":"headboard",
@@ -1233,6 +1261,12 @@ const SHAPES = {
 
   door(){ return svgWrap('<rect x="26" y="6" width="48" height="60"/><rect x="30" y="10" width="40" height="52"/><rect x="35" y="16" width="30" height="24"/><circle class="dot" cx="65" cy="40" r="1.8"/>'); },
 
+  doorPanel(){ return svgWrap('<rect x="32" y="5" width="36" height="62"/><rect x="37" y="10" width="26" height="24"/><rect x="37" y="38" width="26" height="24"/><circle class="dot" cx="63" cy="36" r="1.6"/>'); },
+
+  doorGlass(){ return svgWrap('<rect x="32" y="5" width="36" height="62"/><rect x="37" y="10" width="26" height="40" class="soft"/><rect x="37" y="10" width="26" height="40"/><rect x="37" y="53" width="26" height="9"/><circle class="dot" cx="63" cy="40" r="1.6"/>'); },
+
+  doorShaker(){ return svgWrap('<rect x="32" y="5" width="36" height="62"/><rect x="37" y="10" width="26" height="22"/><rect x="37" y="35" width="26" height="27"/><circle class="dot" cx="63" cy="36" r="1.6"/>'); },
+
   trim(){ return svgWrap('<path d="M12 54 L12 40 Q12 34 18 34 L30 34 Q34 34 34 30 L34 24"/><line x1="34" y1="30" x2="92" y2="30"/><line x1="18" y1="40" x2="92" y2="40"/><line x1="12" y1="54" x2="92" y2="54"/>'); },
 
   casegoods(){ return svgWrap('<path d="M34 44 v-22 q0-8 8-8 h16 q8 0 8 8 v22"/><rect x="30" y="44" width="40" height="6"/><rect x="12" y="40" width="14" height="18"/><circle class="dot" cx="19" cy="49" r="1.4"/><rect x="74" y="40" width="14" height="18"/><circle class="dot" cx="81" cy="49" r="1.4"/>'); },
@@ -1413,10 +1447,29 @@ function addLine(container){
   seg.appendChild(bFrame); seg.appendChild(bInset);
   constrRow.appendChild(cLabel); constrRow.appendChild(seg);
 
+  // Size toggle — Standard / Tall / Oversized, shown only for door categories
+  li.dataset.size = "Standard";
+  const sizeRow = document.createElement("div");
+  sizeRow.className = "ld-construction ld-size";
+  sizeRow.style.display = "none";
+  const sLabel = document.createElement("span"); sLabel.className = "lc-label"; sLabel.textContent = "Size";
+  const sSeg = document.createElement("div"); sSeg.className = "seg";
+  const sizeBtns = {};
+  DOOR_SIZES.forEach((sz,i)=>{
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "seg-btn" + (i===0 ? " active" : "");
+    btn.textContent = sz;
+    sizeBtns[sz] = btn;
+    sSeg.appendChild(btn);
+  });
+  sizeRow.appendChild(sLabel); sizeRow.appendChild(sSeg);
+
   const dDesc = document.createElement("span"); dDesc.className = "ld-desc";
   const dTier = document.createElement("span"); dTier.className = "ld-tier";
   const dNote = document.createElement("span"); dNote.className = "ld-note"; dNote.style.display = "none";
   detail.appendChild(constrRow);
+  detail.appendChild(sizeRow);
   detail.appendChild(dDesc);
   detail.appendChild(dTier);
   detail.appendChild(dNote);
@@ -1430,6 +1483,14 @@ function addLine(container){
   }
   bFrame.addEventListener("click", ()=>setConstruction("Frameless"));
   bInset.addEventListener("click", ()=>setConstruction("Inset"));
+
+  function setSize(val){
+    li.dataset.size = val;
+    DOOR_SIZES.forEach(sz=>sizeBtns[sz].classList.toggle("active", sz === val));
+    li.dataset.override = "0";   // recompute at the new size
+    recalcLine(li);
+  }
+  DOOR_SIZES.forEach(sz=>sizeBtns[sz].addEventListener("click", ()=>setSize(sz)));
 
   li.appendChild(row);
   li.appendChild(detail);
@@ -1504,13 +1565,20 @@ function recalcLine(li){
   const isInset = cat.hasConstruction && li.dataset.construction === "Inset";
   const cMult = isInset ? INSET_UPCHARGE : 1;
 
+  // Size: door categories get a size multiplier on top of the wood tier
+  const sizeRow = li.querySelector(".ld-size");
+  const isDoor = cat.group === "Doors";
+  sizeRow.style.display = isDoor ? "" : "none";
+  const sizeKey = li.dataset.size || "Standard";
+  const sMult = isDoor ? (SIZE_MULT[sizeKey] || 1) : 1;
+
   // Unit label inside the rate field
   li.querySelector(".rate-unit").textContent = rateUnitLabel(cat.unit);
 
   // Effective unit price:
   //   auto  → tier midpoint scaled by region and construction
   //   custom→ the exact figure typed; regional modifier is NOT re-applied
-  const autoRate = mid * regionMod * cMult;
+  const autoRate = mid * regionMod * cMult * sMult;
   let effRate;
   if(override){
     effRate = parseFloat(rateInput.value) || 0;
@@ -1535,10 +1603,11 @@ function recalcLine(li){
 
   // Reference: sell band (where we have one) + the midpoint that drives the calc.
   const insetTag = isInset ? " · inset" : "";
-  let ref = "midpoint " + fmt(autoRate) + bu + " · " + regionMod.toFixed(2) + "×" + insetTag;
+  const sizeTag = (isDoor && sizeKey !== "Standard") ? " · " + sizeKey.toLowerCase() : "";
+  let ref = "midpoint " + fmt(autoRate) + bu + " · " + regionMod.toFixed(2) + "×" + insetTag + sizeTag;
   if(cat.ranges && cat.ranges[tier]){
-    const lo = cat.ranges[tier][0] * regionMod * cMult;
-    const hi = cat.ranges[tier][1] * regionMod * cMult;
+    const lo = cat.ranges[tier][0] * regionMod * cMult * sMult;
+    const hi = cat.ranges[tier][1] * regionMod * cMult * sMult;
     ref = "Sell band " + fmt(lo) + "–" + fmt(hi) + bu + " · " + ref;
   }
   const customNote = override
@@ -1723,6 +1792,7 @@ document.getElementById("printBtn").addEventListener("click", ()=>{
   const systems = [
     ["Millwork & FF&E — material steps up by tier", TIER_DEF_OPEN],
     ["Millwork, fixed material (laminate, veneer, solid surface, quartz, stone, wood ceilings) — execution steps up", TIER_DEF_FIXED],
+    ["Doors — tier steps by wood species (size adjusts on top)", TIER_DEF_DOOR],
     ["Metalwork", TIER_DEF_METAL],
     ["Upholstery", TIER_DEF_UPHOLSTERY]
   ];
