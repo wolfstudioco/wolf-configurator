@@ -1251,17 +1251,17 @@ const SHAPES = {
     for(let i=0;i<n;i++){ const x=x0+i*cw;
       if(i>0) s+='<line x1="'+x.toFixed(1)+'" y1="17" x2="'+x.toFixed(1)+'" y2="60"/>';
       s+='<line x1="'+(x+3).toFixed(1)+'" y1="25" x2="'+(x+cw-3).toFixed(1)+'" y2="25"/>';
-      s+='<circle class="dot" cx="'+(x+cw/2).toFixed(1)+'" cy="43" r="1.5"/>';
+      s+='<circle class="dot" cx="'+(x+cw-6).toFixed(1)+'" cy="30" r="1.5"/>';
     }
     return svgWrap(s);
   },
 
   wallCab(q){
-    const n=segByLF(q,2,1,6), x0=6, w=88, cw=w/n;
-    let s='<rect x="'+x0+'" y="12" width="'+w+'" height="40"/>';
+    const n=segByLF(q,2.5,1,2), w=(n===2?54:32), x0=50-w/2, cw=w/n, yT=5, yB=67;
+    let s='<rect x="'+x0.toFixed(1)+'" y="'+yT+'" width="'+w+'" height="'+(yB-yT)+'"/>';
     for(let i=0;i<n;i++){ const x=x0+i*cw;
-      if(i>0) s+='<line x1="'+x.toFixed(1)+'" y1="12" x2="'+x.toFixed(1)+'" y2="52"/>';
-      s+='<circle class="dot" cx="'+(x+cw/2).toFixed(1)+'" cy="47" r="1.5"/>';
+      if(i>0) s+='<line x1="'+x.toFixed(1)+'" y1="'+yT+'" x2="'+x.toFixed(1)+'" y2="'+yB+'"/>';
+      s+='<circle class="dot" cx="'+(x+cw-6).toFixed(1)+'" cy="58" r="1.5"/>';
     }
     return svgWrap(s);
   },
