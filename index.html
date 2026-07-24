@@ -173,7 +173,7 @@
   /* ---------- Line items ---------- */
   .lines-head{
     display:grid;
-    grid-template-columns:110px 1fr 82px 148px 178px 138px 34px;
+    grid-template-columns:100px 1fr 82px 148px 178px 138px 34px;
     gap:12px;
     padding:0 4px 10px;
     border-bottom:1px solid var(--line);
@@ -192,7 +192,7 @@
 
   .line{
     position:relative;
-    padding:13px 4px 15px 126px;
+    padding:13px 4px 15px 116px;
     border-bottom:1px solid var(--line);
     background:transparent;
   }
@@ -210,8 +210,8 @@
   /* Per-line schematic (dimension-scaled) */
   .thumb{
     position:absolute;
-    left:4px;top:13px;bottom:15px;
-    width:110px;
+    left:4px;top:13px;
+    width:100px;height:100px;
     display:flex;align-items:center;justify-content:center;
     border:1px solid var(--line);
     border-radius:var(--radius);
@@ -567,7 +567,7 @@
       gap:10px 14px;
       position:relative;
     }
-    .thumb{position:static;left:auto;top:auto;bottom:auto;width:100%;height:120px;margin-bottom:12px;}
+    .thumb{position:static;left:auto;top:auto;bottom:auto;width:130px;height:130px;margin-bottom:12px;}
     .line-row .cat{grid-column:1 / -1;}
     .line-row .rate{grid-column:1 / -1;}
     .line-row .subtotal{
@@ -1219,7 +1219,9 @@ function segByLF(qty, per, min, max){
   return Math.max(min, Math.min(max, n||min));
 }
 function svgWrap(inner){
-  return '<svg viewBox="0 0 100 72" preserveAspectRatio="xMidYMid meet">'+inner+'</svg>';
+  /* Square measurement canvas (100×100). Shapes are authored in a 100×72 band,
+     centered vertically so quantity-driven scaling reads consistently. */
+  return '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"><g transform="translate(0,14)">'+inner+'</g></svg>';
 }
 
 const SHAPES = {
@@ -1246,12 +1248,16 @@ const SHAPES = {
   tableRect(){ return svgWrap('<rect x="8" y="20" width="84" height="8"/><line x1="24" y1="28" x2="24" y2="56"/><line x1="14" y1="58" x2="34" y2="58"/><line x1="76" y1="28" x2="76" y2="56"/><line x1="66" y1="58" x2="86" y2="58"/>'); },
 
   baseCab(q){
-    const n=segByLF(q,2.5,1,6), x0=6, w=88, cw=w/n;
-    let s='<line x1="3" y1="15" x2="97" y2="15"/><rect x="'+x0+'" y="17" width="'+w+'" height="43"/><line x1="10" y1="60" x2="90" y2="60"/>';
-    for(let i=0;i<n;i++){ const x=x0+i*cw;
-      if(i>0) s+='<line x1="'+x.toFixed(1)+'" y1="17" x2="'+x.toFixed(1)+'" y2="60"/>';
-      s+='<line x1="'+(x+3).toFixed(1)+'" y1="25" x2="'+(x+cw-3).toFixed(1)+'" y2="25"/>';
-      s+='<circle class="dot" cx="'+(x+cw-6).toFixed(1)+'" cy="30" r="1.5"/>';
+    // Doors scale ~1 per LF, wrapping into rows of 6 (a "run"), pull upper-right.
+    const N=Math.max(1,Math.min(18,Math.round(parseFloat(q)||1)));
+    const cols=Math.min(N,6), rows=Math.ceil(N/6);
+    const x0=6, wTot=88, cw=wTot/cols, gY=5, yT=4, yB=68;
+    const rH=(yB-yT-(rows-1)*gY)/rows;
+    let s='';
+    for(let i=0;i<N;i++){
+      const c=i%6, r=Math.floor(i/6), dw=cw-2, x=x0+c*cw, y=yT+r*(rH+gY);
+      s+='<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+dw.toFixed(1)+'" height="'+rH.toFixed(1)+'"/>';
+      s+='<circle class="dot" cx="'+(x+dw-4).toFixed(1)+'" cy="'+(y+5).toFixed(1)+'" r="1.5"/>';
     }
     return svgWrap(s);
   },
