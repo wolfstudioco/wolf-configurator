@@ -756,6 +756,10 @@ const CATEGORIES = [
   {group:"Doors", name:"Exterior glass entry door", unit:"EA", tiers:{Economy:1600, Standard:6800, Premium:8800, "Ultra-premium":10800}},
   {group:"Doors", name:"Exterior Shaker front door", unit:"EA", tiers:{Economy:1600, Standard:6300, Premium:8300, "Ultra-premium":10300}},
 
+  {group:"Plumbing Fixtures", name:"Kitchen sink, small (kitchenette)", unit:"EA", tiers:{Economy:150, Standard:300, Premium:475, "Ultra-premium":700}},
+  {group:"Plumbing Fixtures", name:"Kitchen sink, standard", unit:"EA", tiers:{Economy:225, Standard:425, Premium:750, "Ultra-premium":1400}},
+  {group:"Plumbing Fixtures", name:"Kitchen faucet", unit:"EA", tiers:{Economy:150, Standard:300, Premium:550, "Ultra-premium":1100}},
+
   {group:"Hotel FF&E", name:"Full casegoods package", unit:"per room", tiers:{Economy:4500, Standard:7250, Premium:12000, "Ultra-premium":22500}},
   {group:"Hotel FF&E", name:"Headboard", unit:"EA", tiers:{Economy:900, Standard:1700, Premium:3350, "Ultra-premium":6750}},
   {group:"Hotel FF&E", name:"Nightstand pair", unit:"EA (pair)", tiers:{Economy:700, Standard:1300, Premium:2450, "Ultra-premium":4600}},
@@ -841,6 +845,18 @@ const TIER_DEF_CABINET = {
   "Premium":"premium HPL or thermofoil doors, quality concealed hardware, matched faces and refined profiles.",
   "Ultra-premium":"specialty high-durability laminate, top-tier and custom hardware, exacting seams and detail."
 };
+const TIER_DEF_SINK = {
+  "Economy":"drop-in stainless steel, standard gauge — value fixture.",
+  "Standard":"undermount 18-gauge stainless steel — the everyday spec.",
+  "Premium":"fireclay, granite composite, or 16-gauge workstation stainless.",
+  "Ultra-premium":"hand-hammered copper, designer fireclay, or premium workstation — statement fixture."
+};
+const TIER_DEF_FAUCET = {
+  "Economy":"single-handle pull-down, standard finish — value fixture.",
+  "Standard":"quality pull-down sprayer, solid construction — the everyday spec.",
+  "Premium":"premium pull-down, solid-brass body, advanced spray and finish.",
+  "Ultra-premium":"designer / articulating faucet, luxury finishes — statement fixture."
+};
 const TIER_DEF_METAL = {
   "Economy":"standard powder-coat colors, simple flat-panel or stock forms, commercial-grade finish quality.",
   "Standard":"custom powder-coat colors, mixed finishes, mid-complexity fabrication — hospitality-grade.",
@@ -890,6 +906,7 @@ const GROUP_NOTES = {"Metalwork":GROUP_NOTE, "Upholstery":GROUP_NOTE, "Restauran
 /* Pick the right tier-definition set for a category. */
 function tierDefFor(cat){
   if(cat.name === "Base cabinets" || cat.name === "Wall cabinets") return TIER_DEF_CABINET;
+  if(cat.group === "Plumbing Fixtures") return cat.name === "Kitchen faucet" ? TIER_DEF_FAUCET : TIER_DEF_SINK;
   if(cat.group === "Doors") return TIER_DEF_DOOR;
   if(cat.group === "Metalwork") return TIER_DEF_METAL;
   if(cat.group === "Upholstery") return TIER_DEF_UPHOLSTERY;
@@ -952,6 +969,9 @@ const DETAILS = {
   "Interior swinging door":{desc:"Interior door system — Standard and up are a solid-wood 2-panel flat-panel Shaker slab, pre-hung in a solid-wood jamb, shop-sanded and finished; Economy is a value-grade prehung door. Tier steps the wood species (maple / white oak standard); size adjusts on top. Lockset priced separately. Each.", r:{Economy:[900,1500],Standard:[1800,2600],Premium:[2400,3400],"Ultra-premium":[2800,3800]}},
   "Exterior glass entry door":{desc:"Exterior entry system — Standard and up are a custom single-panel solid-core slab with an insulated glass lite, pre-hung in a weatherstripped door-matched jamb with hinges, sill, casing, and factory finish, machined for a deadbolt; Economy is a value-grade prehung door. Tier steps the wood species (maple standard); size adjusts on top. Lockset priced separately. Each.", r:{Economy:[1200,2000],Standard:[5800,7800],Premium:[7600,10000],"Ultra-premium":[9400,12200]}},
   "Exterior Shaker front door":{desc:"Exterior front-entry system — Standard and up are a custom solid-wood Shaker double-panel slab, pre-hung in a weatherstripped door-matched jamb with hinges, sill, casing, and factory finish, machined for a deadbolt; Economy is a value-grade prehung door. Tier steps the wood species (maple standard); size adjusts on top. Lockset priced separately. Each.", r:{Economy:[1200,2000],Standard:[5300,7300],Premium:[7100,9500],"Ultra-premium":[8800,11800]}},
+  "Kitchen sink, small (kitchenette)":{desc:"Bar/prep-scale kitchen sink for a kitchenette — single small bowl, undermount or drop-in. Fixture only; install and plumbing priced separately. Each.", r:{Economy:[100,200],Standard:[225,375],Premium:[375,575],"Ultra-premium":[550,850]}},
+  "Kitchen sink, standard":{desc:"Full-size kitchen sink — single or 60/40 bowl, undermount or drop-in. Fixture only; install and plumbing priced separately. Each.", r:{Economy:[150,300],Standard:[325,525],Premium:[575,925],"Ultra-premium":[1050,1750]}},
+  "Kitchen faucet":{desc:"Kitchen faucet — pull-down sprayer, deck-mount. Fixture only; install and plumbing priced separately. Each.", r:{Economy:[100,200],Standard:[225,375],Premium:[425,675],"Ultra-premium":[800,1400]}},
 
   "Full casegoods package":{desc:"Complete guestroom casegoods set — headboard, nightstands, desk, dresser/media console, and luggage bench — coordinated and priced per room.", r:{Economy:[3500,5500],Standard:[5500,9000],Premium:[9000,15000],"Ultra-premium":[15000,30000]}},
   "Headboard":{desc:"Guestroom headboard — upholstered, wood, or mixed-material, wall-mounted or floor-anchored. Priced each.", r:{Economy:[600,1200],Standard:[1200,2200],Premium:[2200,4500],"Ultra-premium":[4500,9000]}},
@@ -1036,6 +1056,10 @@ const SHAPE_BY_NAME = {
   "Interior swinging door":"doorPanel",
   "Exterior glass entry door":"doorGlass",
   "Exterior Shaker front door":"doorShaker",
+
+  "Kitchen sink, small (kitchenette)":"sink",
+  "Kitchen sink, standard":"sink",
+  "Kitchen faucet":"faucet",
 
   "Full casegoods package":"casegoods",
   "Headboard":"headboard",
@@ -1343,7 +1367,11 @@ const SHAPES = {
 
   bracket(){ return svgWrap('<path d="M30 18 L30 54 L66 54"/><path d="M30 44 L40 54"/><circle class="dot" cx="35" cy="24" r="1.6"/><circle class="dot" cx="58" cy="49" r="1.6"/>'); },
 
-  featurePiece(){ return svgWrap('<polygon points="30,56 40,20 52,44 64,16 72,56"/><line x1="24" y1="56" x2="78" y2="56"/>'); }
+  featurePiece(){ return svgWrap('<polygon points="30,56 40,20 52,44 64,16 72,56"/><line x1="24" y1="56" x2="78" y2="56"/>'); },
+
+  sink(){ return svgWrap('<rect x="12" y="14" width="76" height="46" rx="3"/><rect x="24" y="23" width="52" height="30" rx="4"/><circle cx="50" cy="38" r="3.5"/><circle class="dot" cx="50" cy="38" r="1.2"/>'); },
+
+  faucet(){ return svgWrap('<rect x="24" y="56" width="26" height="6" rx="1"/><path d="M37 56 L37 32 Q37 18 53 18 L64 18 Q70 18 70 27 L70 40"/><line x1="30" y1="30" x2="44" y2="30"/>'); }
 };
 
 const BADGE_UNITS = {"EA":1,"EA (pair)":1,"pair":1,"per room":1};
@@ -1798,6 +1826,8 @@ document.getElementById("printBtn").addEventListener("click", ()=>{
     ["Millwork & FF&E — material steps up by tier", TIER_DEF_OPEN],
     ["Millwork, fixed material (painted, veneer, solid surface, quartz, stone, wood ceilings) — execution steps up", TIER_DEF_FIXED],
     ["Doors — tier steps by wood species (size adjusts on top)", TIER_DEF_DOOR],
+    ["Sinks — tier steps material (stainless → composite/fireclay → copper)", TIER_DEF_SINK],
+    ["Faucets — tier steps grade (value → premium pull-down → designer)", TIER_DEF_FAUCET],
     ["Metalwork", TIER_DEF_METAL],
     ["Upholstery", TIER_DEF_UPHOLSTERY]
   ];
