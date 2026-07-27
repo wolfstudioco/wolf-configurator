@@ -112,6 +112,10 @@
   select:focus,input[type="number"]:focus{border-color:var(--accent);}
 
   .region-block select{min-width:260px;}
+  .region-note{
+    font-size:10px;color:var(--ink-faint);
+    letter-spacing:0.01em;text-align:right;max-width:260px;line-height:1.4;
+  }
 
   /* ---------- Intro note ---------- */
   .note-lead{
@@ -748,8 +752,9 @@
       <div class="doc-title">Conceptual Estimate Console</div>
     </div>
     <div class="region-block no-print">
-      <label class="field-label" for="region">Regional Modifier</label>
+      <label class="field-label" for="region">Market Pricing</label>
       <select id="region"></select>
+      <div class="region-note">Optional sell-side lever — regional <em>cost</em> is handled in Freight &amp; Install below.</div>
     </div>
     <div class="print-only" style="text-align:right;font-size:11pt;">
       <div id="print-region"></div>
@@ -785,7 +790,7 @@
   <div class="totals">
     <div class="totals-inner">
       <div class="total-row">
-        <span class="label">Regional Modifier</span>
+        <span class="label">Market Pricing</span>
         <span class="value" id="modDisplay">1.00×</span>
       </div>
       <div class="total-row grand">
@@ -892,15 +897,15 @@
    Data does not persist between sessions.
    ============================================================ */
 
+/* Market Pricing — optional SELL-side positioning lever (charge what the market bears).
+   NOT a cost driver; regional cost is carried by install labor + freight. Default 1.00×. */
 const REGIONS = [
-  {name:"Midwest Secondary (baseline)", mod:1.00},
-  {name:"South", mod:1.10},
-  {name:"Mountain West", mod:1.15},
-  {name:"Chicago / Upper Midwest Urban", mod:1.15},
-  {name:"Florida Markets", mod:1.22},
-  {name:"West Coast", mod:1.32},
-  {name:"Northeast Urban", mod:1.40},
-  {name:"Rural / Small Markets", mod:0.90},
+  {name:"National list (baseline)", mod:1.00},
+  {name:"Soft / value market", mod:0.90},
+  {name:"Firm market", mod:1.10},
+  {name:"Strong market", mod:1.18},
+  {name:"Premium positioning", mod:1.28},
+  {name:"Top-of-market", mod:1.40},
 ];
 
 /* ---------- Freight & Install model (resource-based, 2025–26 data) ---------- */
@@ -950,7 +955,8 @@ let fiUrban = false;
 let fiCrewRate = 52;
 let fiCrewSize = 3;
 const INSTALL_LOADING = 1.5;     // resource install = field labor × loading (supervision, mobilization, punch, margin)
-let furnishedTotal = 0;
+let furnishedTotal = 0;          // product total WITH Market Pricing (sell) — drives Project Total + all-in
+let furnishedBase = 0;           // product total at national list (Market Pricing removed) — drives freight + install cost
 
 /* Install field-labor productivity — person-hours per unit for a FULL field install
    (delivery handling, layout, set, level/scribe, fasten, filler, hardware, punch).
@@ -1057,7 +1063,6 @@ const CATEGORIES = [
   {group:"Upholstery", name:"Roman shades, custom", unit:"EA", tiers:{Economy:400, Standard:750, Premium:1400, "Ultra-premium":2750}},
 
   {group:"Restaurant Furniture", name:"Dining chair", unit:"EA", tiers:{Economy:546, Standard:633, Premium:929, "Ultra-premium":1237}},
-  {group:"Restaurant Furniture", name:"Banquette / booth seating", unit:"LF", tiers:{Economy:425, Standard:750, Premium:1350, "Ultra-premium":2600}},
   {group:"Restaurant Furniture", name:"Round table, 24\" (pedestal)", unit:"EA", tiers:{Economy:416, Standard:585, Premium:745, "Ultra-premium":1630}},
   {group:"Restaurant Furniture", name:"Round table, 30\" (pedestal)", unit:"EA", tiers:{Economy:480, Standard:791, Premium:992, "Ultra-premium":1947}},
   {group:"Restaurant Furniture", name:"Round table, 36\" (pedestal)", unit:"EA", tiers:{Economy:607, Standard:1068, Premium:1324, "Ultra-premium":2354}},
@@ -1270,7 +1275,6 @@ const DETAILS = {
   "Roman shades, custom":{desc:"Custom Roman shades — fabricated, lined, and mounted. Priced each."},
 
   "Dining chair":{desc:"Commercial restaurant dining chair. Tiers span the line — steel-base wood-seat up to fully upholstered solid wood. Priced each."},
-  "Banquette / booth seating":{desc:"Custom upholstered banquette / booth seating — frame, foam, and textile over a fixed base. Per linear foot."},
   "Round table, 24\" (pedestal)":{desc:"Round dining table, 24\" diameter, on a pedestal base. Seats 2. Priced each."},
   "Round table, 30\" (pedestal)":{desc:"Round dining table, 30\" diameter, pedestal base. Seats 2–3. Priced each."},
   "Round table, 36\" (pedestal)":{desc:"Round dining table, 36\" diameter, pedestal base. Seats 4. Priced each."},
@@ -1358,7 +1362,6 @@ const SHAPE_BY_NAME = {
   "Roman shades, custom":"romanShade",
 
   "Dining chair":"chair",
-  "Banquette / booth seating":"banquette",
   "Round table, 24\" (pedestal)":"tableRound",
   "Round table, 30\" (pedestal)":"tableRound",
   "Round table, 36\" (pedestal)":"tableRound",
@@ -1883,6 +1886,9 @@ function recalcLine(li){
   const subtotal = qty * effRate;
   li.querySelector(".subtotal").textContent = fmt(subtotal);
   li.dataset.subtotal = subtotal;
+  // National-list base (Market Pricing removed) — freight & install cost are sized off this, not the sell markup
+  const baseRate = override ? effRate : (mid * cMult * sMult);
+  li.dataset.baseSubtotal = qty * baseRate;
 
   // Schematic thumbnail (scales with inputs)
   li.querySelector(".thumb-art").innerHTML = buildThumbArt(cat, qty);
@@ -1902,7 +1908,7 @@ function recalcLine(li){
     ref = "Sell band " + fmt(lo) + "–" + fmt(hi) + bu + " · " + ref;
   }
   const customNote = override
-    ? " <span class=\"ld-custom\">· custom rate " + fmt(effRate) + bu + " — modifier not applied</span>"
+    ? " <span class=\"ld-custom\">· custom rate " + fmt(effRate) + bu + " — Market Pricing not applied</span>"
     : "";
   li.querySelector(".ld-tier").innerHTML =
     "<b>" + tier + "</b> — " + def
@@ -1936,18 +1942,20 @@ function recalcAll(){
 
 /* ---------- Totals ---------- */
 function recalcTotals(){
-  let total = 0;
+  let total = 0, baseTotal = 0;
 
   // Ungrouped lines (direct children of #lines)
   linesEl.querySelectorAll(":scope > .line").forEach(li=>{
     total += parseFloat(li.dataset.subtotal) || 0;
+    baseTotal += parseFloat(li.dataset.baseSubtotal) || 0;
   });
 
   // Sets: sum of their lines = price of one unit; × set qty = set total
   linesEl.querySelectorAll(":scope > .set").forEach(setEl=>{
-    let perUnit = 0;
+    let perUnit = 0, perBase = 0;
     setEl.querySelectorAll(".set-lines > .line").forEach(li=>{
       perUnit += parseFloat(li.dataset.subtotal) || 0;
+      perBase += parseFloat(li.dataset.baseSubtotal) || 0;
     });
     const q = parseFloat(setEl.querySelector(".set-qty").value);
     const qty = (isNaN(q) ? 1 : q);
@@ -1956,10 +1964,12 @@ function recalcTotals(){
       fmt(perUnit) + " per unit  ×  " + qty;
     setEl.querySelector(".set-subtotal").textContent = fmt(setTotal);
     total += setTotal;
+    baseTotal += perBase * qty;
   });
 
   document.getElementById("grandTotal").textContent = fmt(total);
   furnishedTotal = total;
+  furnishedBase = baseTotal;
   recalcFI();
 }
 
@@ -2005,7 +2015,8 @@ function sizeFactorFor(furn){
 function recalcFI(){
   const g = id => document.getElementById(id);
   if(!g("fiAllIn")) return;
-  const furn = furnishedTotal;
+  const furn = furnishedTotal;                 // sell (Market Pricing applied) — shown + all-in
+  const base = furnishedBase || furnishedTotal; // national list — freight & install cost sized off this
   const scope = INSTALL_SCOPES[fiScopeIdx];
   const region = LABOR_REGIONS[fiRegionIdx];
   const basis = LABOR_BASIS[fiLaborBasis];
@@ -2019,24 +2030,24 @@ function recalcFI(){
   const crew = Math.max(1, fiCrewSize || 1);
   const days = hrs / (crew * 8);
 
-  // Project-size factor (economies of scale) — applied to both freight and install
-  const size = sizeFactorFor(furn);
+  // Project-size factor (economies of scale) — keyed off the national base, applied to freight + install
+  const size = sizeFactorFor(base);
 
-  // Installation: % of furnished value, or resource (crew-hours × loading)
+  // Installation: % of furnished value, or resource (crew-hours × loading). Never off the sell markup.
   let install, installNote;
   if(fiInstallMethod === "resource"){
     install = fieldLabor * INSTALL_LOADING * size.f;
-    installNote = "Install: field labor × " + INSTALL_LOADING.toFixed(1) +
+    installNote = "Install: field labor × " + INSTALL_LOADING.toFixed(1) + " × " + size.f.toFixed(2) + " size" +
       " (crew-hours · " + region.name.split(" — ")[0] + " · " +
       (fiLaborBasis === "open" ? "open shop" : "prevailing wage / union") + ")";
   } else {
-    install = furn * scope.pct * basis * region.f * size.f;
+    install = base * scope.pct * basis * region.f * size.f;
     installNote = "Install: " + Math.round(scope.pct*100) + "% × " +
       (fiLaborBasis === "open" ? "open shop 1.00×" : "prevailing wage / union 1.50×") + " × " +
-      region.f.toFixed(2) + "× " + region.name.split(" — ")[0] + " labor";
+      region.f.toFixed(2) + "× " + region.name.split(" — ")[0] + " labor × " + size.f.toFixed(2) + " size";
   }
 
-  let freight = furn * mode.pct * dist.m;
+  let freight = base * mode.pct * dist.m;
   if(fiUrban) freight *= 1.20;
   freight *= size.f;
   const allIn = furn + freight + install;
@@ -2059,8 +2070,8 @@ function recalcFI(){
   if(hrs <= 0){
     g("fiSpread").textContent = "";
   } else if(fiInstallMethod === "resource"){
-    g("fiSpread").textContent = "Installation above = field labor × " + INSTALL_LOADING.toFixed(1) +
-      " (adds supervision, mobilization, punch, and margin).";
+    g("fiSpread").textContent = "Installation = field labor × " + INSTALL_LOADING.toFixed(1) +
+      " loading × " + size.f.toFixed(2) + " size factor (supervision, mobilization, punch, margin).";
   } else {
     const spread = install - fieldLabor;
     if(spread >= 0){
