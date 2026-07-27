@@ -844,6 +844,7 @@
         <div class="total-row"><span class="label">Installation</span><span class="value" id="fiInstall">$0</span></div>
         <div class="total-row grand"><span class="label">All-in Project Total</span><span class="value" id="fiAllIn">$0</span></div>
         <div class="fi-basis" id="fiBasis"></div>
+        <div class="fi-basis" id="fiSize"></div>
 
         <div class="fi-cross">
           <div class="fi-cross-head">Resource cross-check — raw field labor</div>
@@ -866,7 +867,7 @@
       <div class="fi-method">
         <div class="fi-m">
           <div class="fi-m-title">Installation &amp; labor</div>
-          <div class="fi-m-body">Installation is estimated as a percentage of furnished cost by scope — millwork and scribed casework carry more field labor (~18%) than freestanding, set-in-place FF&amp;E (~12%). Rates assume a fully-burdened crew (wage + fringe + insurance). The <em>Labor basis</em> switch models the single largest install variable: open-shop rates versus Davis-Bacon prevailing wage and local union agreements, which run roughly 1.5× — 40–60% — higher. That premium is driven by base-plus-fringe wage scales and cross-trade jurisdiction (teamsters move goods dock-to-floor, carpenters set millwork, electricians handle anything hardwired). Figures use current 2025–26 published scales and are directional (±10–15%); the applicable wage determination or CBA should be verified before bid. The <em>resource cross-check</em> below works bottom-up instead — it derives raw field-labor hours from the quantities entered (productivity by category) × a burdened crew rate — so the % budget can be sized against actual crew time; the gap between them is receiving, PM, supervision, and install margin. Use the <em>Millwork / cabinet-only</em> preset for fabricated casework — it prices install from crew-hours (× 1.5) and drops freight to dock delivery, since the % model is calibrated to full FF&amp;E packages and overstates a cabinet-only job.</div>
+          <div class="fi-m-body">Installation is estimated as a percentage of furnished cost by scope — millwork and scribed casework carry more field labor (~18%) than freestanding, set-in-place FF&amp;E (~12%). Rates assume a fully-burdened crew (wage + fringe + insurance). The <em>Labor basis</em> switch models the single largest install variable: open-shop rates versus Davis-Bacon prevailing wage and local union agreements, which run roughly 1.5× — 40–60% — higher. That premium is driven by base-plus-fringe wage scales and cross-trade jurisdiction (teamsters move goods dock-to-floor, carpenters set millwork, electricians handle anything hardwired). Figures use current 2025–26 published scales and are directional (±10–15%); the applicable wage determination or CBA should be verified before bid. The <em>resource cross-check</em> below works bottom-up instead — it derives raw field-labor hours from the quantities entered (productivity by category) × a burdened crew rate — so the % budget can be sized against actual crew time; the gap between them is receiving, PM, supervision, and install margin. Use the <em>Millwork / cabinet-only</em> preset for fabricated casework — it prices install from crew-hours (× 1.5) and drops freight to dock delivery, since the % model is calibrated to full FF&amp;E packages and overstates a cabinet-only job. Both freight and install also carry an automatic <em>project-size factor</em> — fixed mobilization, PM, supervision, and freight minimums spread over a larger job, so the effective rate eases from ~1.15× under $50k to ~0.85× over $5M (construction's economies of scale are modest, and very large jobs can re-inflate).</div>
         </div>
         <div class="fi-m">
           <div class="fi-m-title">Regional labor factor</div>
@@ -1987,6 +1988,19 @@ function syncFIControls(){
   if(ps) ps.querySelectorAll(".seg-btn").forEach(b=>b.classList.toggle("active", b.dataset.v === fiPreset));
 }
 
+/* ---------- Project-size factor (economies of scale on freight + install) ----------
+   Fixed mobilization/PM/supervision + freight minimums spread over larger value; big
+   repetitive jobs install more efficiently. Anchored so a typical $150k–500k job = 1.00×.
+   Floors out (construction has weak economies of scale; mega-jobs can re-inflate). */
+function sizeFactorFor(furn){
+  if(furn < 50000)    return {f:1.15, label:"under $50k"};
+  if(furn < 150000)   return {f:1.08, label:"$50k–150k"};
+  if(furn < 500000)   return {f:1.00, label:"$150k–500k"};
+  if(furn < 1500000)  return {f:0.93, label:"$500k–1.5M"};
+  if(furn < 5000000)  return {f:0.88, label:"$1.5M–5M"};
+  return {f:0.85, label:"over $5M"};
+}
+
 /* ---------- Freight & Install totals ---------- */
 function recalcFI(){
   const g = id => document.getElementById(id);
@@ -2005,15 +2019,18 @@ function recalcFI(){
   const crew = Math.max(1, fiCrewSize || 1);
   const days = hrs / (crew * 8);
 
+  // Project-size factor (economies of scale) — applied to both freight and install
+  const size = sizeFactorFor(furn);
+
   // Installation: % of furnished value, or resource (crew-hours × loading)
   let install, installNote;
   if(fiInstallMethod === "resource"){
-    install = fieldLabor * INSTALL_LOADING;
+    install = fieldLabor * INSTALL_LOADING * size.f;
     installNote = "Install: field labor × " + INSTALL_LOADING.toFixed(1) +
       " (crew-hours · " + region.name.split(" — ")[0] + " · " +
       (fiLaborBasis === "open" ? "open shop" : "prevailing wage / union") + ")";
   } else {
-    install = furn * scope.pct * basis * region.f;
+    install = furn * scope.pct * basis * region.f * size.f;
     installNote = "Install: " + Math.round(scope.pct*100) + "% × " +
       (fiLaborBasis === "open" ? "open shop 1.00×" : "prevailing wage / union 1.50×") + " × " +
       region.f.toFixed(2) + "× " + region.name.split(" — ")[0] + " labor";
@@ -2021,6 +2038,7 @@ function recalcFI(){
 
   let freight = furn * mode.pct * dist.m;
   if(fiUrban) freight *= 1.20;
+  freight *= size.f;
   const allIn = furn + freight + install;
 
   g("fiFurnished").textContent = fmt(furn);
@@ -2030,6 +2048,8 @@ function recalcFI(){
   g("fiBasis").textContent = installNote +
     "   ·   Freight: " + Math.round(mode.pct*100) + "% × " + dist.m.toFixed(2) + "×" +
     (fiUrban ? " × urban 1.20×" : "");
+  g("fiSize").textContent = "Project-size factor: " + size.f.toFixed(2) + "× (" + size.label +
+    " tier) — applied to freight + install.";
 
   // Resource cross-check readout
   g("fiLabor").textContent = fmt(fieldLabor);
