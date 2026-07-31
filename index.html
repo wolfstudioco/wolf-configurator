@@ -448,6 +448,13 @@
     width:66px;text-align:center;
     font-size:15px;font-weight:600;
   }
+  .set-dup{
+    font-family:inherit;font-size:10.5px;letter-spacing:0.05em;
+    background:transparent;border:1px solid var(--line-strong);border-radius:var(--radius);
+    color:var(--ink-faint);padding:4px 10px;cursor:pointer;white-space:nowrap;
+    transition:color .12s ease,border-color .12s ease;
+  }
+  .set-dup:hover{color:var(--ink);border-color:var(--ink-faint);}
   .set-remove{
     border:none;background:none;cursor:pointer;color:var(--ink-faint);
     font-size:20px;line-height:1;padding:4px;border-radius:var(--radius);
@@ -634,6 +641,12 @@
   .fi-cross-controls .fi-field input{width:100%;}
   .fi-note{font-size:11px;color:var(--ink-faint);letter-spacing:0.01em;line-height:1.55;}
   #fiSpread{color:var(--ink-soft);}
+  .fi-scope-row{display:flex;align-items:center;gap:8px;}
+  .fi-scope-row select{flex:1;min-width:0;}
+  #installPct{width:62px;}
+  .fi-pct-suffix{font-size:12px;color:var(--ink-faint);}
+  .fi-internal{border-top-style:solid;}
+  #fiDelivered{font-size:20px;}
   @media(max-width:820px){
     .fi-controls{grid-template-columns:1fr;}
     .fi-check{justify-content:flex-start;}
@@ -783,6 +796,7 @@
     <button class="btn btn-ghost" id="addLine">+ Add Line</button>
     <button class="btn btn-ghost" id="addSet">+ Add Set</button>
     <div class="spacer"></div>
+    <button class="btn btn-plain" id="undoBtn" disabled>Undo delete</button>
     <button class="btn btn-plain" id="clearAll">Clear All</button>
     <button class="btn btn-primary" id="printBtn">Print</button>
   </div>
@@ -824,7 +838,10 @@
         </div>
         <div class="fi-field">
           <label class="field-label" for="installScope">Install scope</label>
-          <select id="installScope"></select>
+          <div class="fi-scope-row">
+            <select id="installScope"></select>
+            <input type="number" id="installPct" min="0" step="0.5" aria-label="Install percent of goods"><span class="fi-pct-suffix">%</span>
+          </div>
         </div>
         <div class="fi-field">
           <label class="field-label" for="laborRegion">Install labor region</label>
@@ -850,6 +867,7 @@
         <div class="total-row grand"><span class="label">All-in Project Total</span><span class="value" id="fiAllIn">$0</span></div>
         <div class="fi-basis" id="fiBasis"></div>
         <div class="fi-basis" id="fiSize"></div>
+        <div class="fi-basis" id="fiShares"></div>
 
         <div class="fi-cross">
           <div class="fi-cross-head">Resource cross-check — raw field labor</div>
@@ -866,6 +884,22 @@
           <div class="total-row"><span class="label">Field labor (crew-hrs × rate)</span><span class="value" id="fiLabor">$0</span></div>
           <div class="fi-note" id="fiHours"></div>
           <div class="fi-note" id="fiSpread"></div>
+        </div>
+
+        <div class="fi-cross fi-internal">
+          <div class="fi-cross-head">Internal — overhead &amp; margin (not printed)</div>
+          <div class="fi-cross-controls">
+            <div class="fi-field">
+              <label class="field-label" for="ohPct">Overhead &amp; GC fee %</label>
+              <input type="number" id="ohPct" value="0" min="0" step="0.5">
+            </div>
+            <div class="fi-field">
+              <label class="field-label" for="contPct">Contingency %</label>
+              <input type="number" id="contPct" value="0" min="0" step="0.5">
+            </div>
+          </div>
+          <div class="total-row grand"><span class="label">Delivered total (internal)</span><span class="value" id="fiDelivered">$0</span></div>
+          <div class="fi-note" id="fiDelNote"></div>
         </div>
       </div>
 
@@ -913,6 +947,7 @@ const INSTALL_SCOPES = [
   {name:"Millwork & casework install (≈18%)", pct:0.18},
   {name:"Blended hotel package (≈16%)", pct:0.16},
   {name:"Freestanding FF&E, set-in-place (≈12%)", pct:0.12},
+  {name:"Complex architectural millwork (≈30%)", pct:0.30},
 ];
 const LABOR_BASIS = {open:1.00, pw:1.50};
 const LABOR_REGIONS = [
@@ -954,6 +989,9 @@ let fiDistIdx = 1;
 let fiUrban = false;
 let fiCrewRate = 52;
 let fiCrewSize = 3;
+let fiScopePct = 0.16;      // effective install % (pct method) — set by scope dropdown or custom entry
+let fiOverheadPct = 0;      // internal overhead & GC fee % (opt-in)
+let fiContingencyPct = 0;   // internal contingency % (opt-in)
 const INSTALL_LOADING = 1.5;     // resource install = field labor × loading (supervision, mobilization, punch, margin)
 let furnishedTotal = 0;          // product total WITH Market Pricing (sell) — drives Project Total + all-in
 let furnishedBase = 0;           // product total at national list (Market Pricing removed) — drives freight + install cost
@@ -1814,6 +1852,7 @@ function addLine(container){
   });
   rm.addEventListener("click", ()=>{
     const setLines = li.closest(".set-lines");
+    pushUndo({type:"line", state:serializeLine(li), parent:li.parentNode, next:li.nextSibling});
     li.remove();
     if(setLines) refreshSetEmpty(setLines);
     ensureEmptyState();
@@ -1824,6 +1863,7 @@ function addLine(container){
   if(inSet) removeSetEmpty(target); else removeEmptyState();
   target.appendChild(li);
   recalcLine(li);
+  return li;
 }
 
 /* ---------- Set empty-hint helpers ---------- */
@@ -1838,6 +1878,90 @@ function refreshSetEmpty(setLines){
 function removeSetEmpty(setLines){
   const e = setLines.querySelector(".set-empty");
   if(e) e.remove();
+}
+
+/* ---------- Serialize / restore (Duplicate Set + Undo) ---------- */
+function serializeLine(li){
+  return {
+    cat: li.querySelector(".cat-select").value,
+    tier: li.querySelector(".tier-select").value,
+    qty: li.querySelector(".qty-input").value,
+    override: li.dataset.override,
+    rate: li.querySelector(".rate-input").value,
+    construction: li.dataset.construction,
+    size: li.dataset.size
+  };
+}
+function applyLineState(li, s){
+  const catSel = li.querySelector(".cat-select");
+  const tierSel = li.querySelector(".tier-select");
+  catSel.value = s.cat;
+  const nt = buildTierSelect(+catSel.value, s.tier);
+  tierSel.innerHTML = nt.innerHTML;
+  tierSel.value = s.tier || nt.value;
+  li.querySelector(".qty-input").value = s.qty;
+  li.dataset.construction = s.construction || "Frameless";
+  li.dataset.size = s.size || DOOR_SIZES[0];
+  li.querySelectorAll(".ld-construction:not(.ld-size) .seg-btn").forEach(b=>b.classList.toggle("active", b.textContent === li.dataset.construction));
+  li.querySelectorAll(".ld-size .seg-btn").forEach(b=>b.classList.toggle("active", b.textContent === li.dataset.size));
+  li.dataset.override = s.override || "0";
+  if(s.override === "1"){
+    li.querySelector(".rate-input").value = s.rate;
+    li.querySelector(".rate-wrap").classList.add("custom");
+  }
+  recalcLine(li);
+}
+function serializeSet(setEl){
+  return {
+    name: setEl.querySelector(".set-name").value,
+    qty: setEl.querySelector(".set-qty").value,
+    lines: [...setEl.querySelectorAll(".set-lines > .line")].map(serializeLine)
+  };
+}
+function buildSetFrom(state){
+  const set = addSet({seed:false, focus:false});
+  set.querySelector(".set-name").value = state.name;
+  set.querySelector(".set-qty").value = state.qty;
+  const body = set.querySelector(".set-lines");
+  (state.lines || []).forEach(s=>{ const li = addLine(body); applyLineState(li, s); });
+  refreshSetEmpty(body);
+  return set;
+}
+function duplicateSet(setEl){
+  const state = serializeSet(setEl);
+  state.name = state.name + " (copy)";
+  const newSet = buildSetFrom(state);
+  setEl.after(newSet);
+  recalcTotals();
+}
+
+/* ---------- Undo deletions (in-session) ---------- */
+const undoStack = [];
+function pushUndo(rec){ undoStack.push(rec); updateUndoBtn(); }
+function updateUndoBtn(){
+  const btn = document.getElementById("undoBtn");
+  if(btn) btn.disabled = undoStack.length === 0;
+}
+function undoDelete(){
+  const rec = undoStack.pop();
+  if(!rec) return;
+  removeEmptyState();
+  let el;
+  if(rec.type === "line"){
+    const parent = (rec.parent && rec.parent.isConnected) ? rec.parent : linesEl;
+    if(parent.classList && parent.classList.contains("set-lines")) removeSetEmpty(parent);
+    el = addLine(parent);
+    applyLineState(el, rec.state);
+  } else {
+    el = buildSetFrom(rec.state);
+  }
+  // Restore original position if the saved next-sibling is still in place
+  if(rec.next && rec.next.isConnected && rec.next.parentNode === el.parentNode){
+    el.parentNode.insertBefore(el, rec.next);
+  }
+  updateUndoBtn();
+  ensureEmptyState();
+  recalcTotals();
 }
 
 /* ---------- Recalc a single line ---------- */
@@ -1976,7 +2100,7 @@ function recalcTotals(){
 /* ---------- Preset + control sync ---------- */
 function applyPreset(p){
   fiPreset = p;
-  if(p === "ffe"){ fiInstallMethod = "pct"; fiScopeIdx = 1; fiModeIdx = 1; }        // % blended 16% · white-glove inside
+  if(p === "ffe"){ fiInstallMethod = "pct"; fiScopeIdx = 1; fiScopePct = INSTALL_SCOPES[1].pct; fiModeIdx = 1; } // % blended 16% · white-glove inside
   else if(p === "millwork"){ fiInstallMethod = "resource"; fiModeIdx = 0; }          // crew-hours install · dock freight
   else { fiInstallMethod = "pct"; }                                                  // custom: % method, leave scope/mode
   syncFIControls();
@@ -1984,8 +2108,13 @@ function applyPreset(p){
 }
 function syncFIControls(){
   const $ = id => document.getElementById(id);
+  const resource = (fiInstallMethod === "resource");
   const sc = $("installScope");
-  if(sc){ sc.value = fiScopeIdx; sc.disabled = (fiInstallMethod === "resource"); }
+  if(sc){ sc.value = fiScopeIdx; sc.disabled = resource; }
+  const ip = $("installPct");
+  if(ip){ ip.value = +(fiScopePct*100).toFixed(2); ip.disabled = resource; }
+  if($("ohPct")) $("ohPct").value = +(fiOverheadPct*100).toFixed(2);
+  if($("contPct")) $("contPct").value = +(fiContingencyPct*100).toFixed(2);
   if($("laborRegion")) $("laborRegion").value = fiRegionIdx;
   if($("freightMode")) $("freightMode").value = fiModeIdx;
   if($("freightDist")) $("freightDist").value = fiDistIdx;
@@ -2017,7 +2146,6 @@ function recalcFI(){
   if(!g("fiAllIn")) return;
   const furn = furnishedTotal;                 // sell (Market Pricing applied) — shown + all-in
   const base = furnishedBase || furnishedTotal; // national list — freight & install cost sized off this
-  const scope = INSTALL_SCOPES[fiScopeIdx];
   const region = LABOR_REGIONS[fiRegionIdx];
   const basis = LABOR_BASIS[fiLaborBasis];
   const mode = FREIGHT_MODES[fiModeIdx];
@@ -2041,8 +2169,8 @@ function recalcFI(){
       " (crew-hours · " + region.name.split(" — ")[0] + " · " +
       (fiLaborBasis === "open" ? "open shop" : "prevailing wage / union") + ")";
   } else {
-    install = base * scope.pct * basis * region.f * size.f;
-    installNote = "Install: " + Math.round(scope.pct*100) + "% × " +
+    install = base * fiScopePct * basis * region.f * size.f;
+    installNote = "Install: " + (+(fiScopePct*100).toFixed(1)) + "% × " +
       (fiLaborBasis === "open" ? "open shop 1.00×" : "prevailing wage / union 1.50×") + " × " +
       region.f.toFixed(2) + "× " + region.name.split(" — ")[0] + " labor × " + size.f.toFixed(2) + " size";
   }
@@ -2061,6 +2189,23 @@ function recalcFI(){
     (fiUrban ? " × urban 1.20×" : "");
   g("fiSize").textContent = "Project-size factor: " + size.f.toFixed(2) + "× (" + size.label +
     " tier) — applied to freight + install.";
+
+  // Share-of-total readout (benchmark install/freight against total project cost)
+  const shareOf = x => allIn > 0 ? (100 * x / allIn).toFixed(1) + "%" : "—";
+  g("fiShares").textContent = allIn > 0
+    ? "Of all-in total:  install " + shareOf(install) + "  ·  freight " + shareOf(freight) +
+      "  ·  freight + install " + shareOf(freight + install)
+    : "";
+
+  // Internal overhead & contingency → delivered total (opt-in; not printed)
+  const ohAmt = allIn * fiOverheadPct;
+  const contAmt = (allIn + ohAmt) * fiContingencyPct;
+  const delivered = allIn + ohAmt + contAmt;
+  g("fiDelivered").textContent = fmt(delivered);
+  g("fiDelNote").textContent = (fiOverheadPct > 0 || fiContingencyPct > 0)
+    ? "All-in " + fmt(allIn) + "  +  overhead " + (+(fiOverheadPct*100).toFixed(1)) + "% (" + fmt(ohAmt) + ")" +
+      "  +  contingency " + (+(fiContingencyPct*100).toFixed(1)) + "% (" + fmt(contAmt) + ")."
+    : "Opt-in — enter overhead / contingency % to mark up to a delivered internal number.";
 
   // Resource cross-check readout
   g("fiLabor").textContent = fmt(fieldLabor);
@@ -2120,7 +2265,8 @@ function removeEmptyState(){
 
 /* ---------- Add a set (grouped lines with a shared ×N multiplier) ---------- */
 let setSeq = 0;
-function addSet(){
+function addSet(opts){
+  const o = opts || {};
   const n = ++setSeq;
   const set = document.createElement("li");
   set.className = "set";
@@ -2149,6 +2295,12 @@ function addSet(){
   const qlab = document.createElement("span"); qlab.textContent = "units";
   qw.appendChild(mult); qw.appendChild(qty); qw.appendChild(qlab);
 
+  const dup = document.createElement("button");
+  dup.className = "set-dup no-print";
+  dup.textContent = "Duplicate";
+  dup.title = "Duplicate this set as a template";
+  dup.setAttribute("aria-label","Duplicate set");
+
   const rm = document.createElement("button");
   rm.className = "set-remove no-print";
   rm.innerHTML = "&times;";
@@ -2158,6 +2310,7 @@ function addSet(){
   head.appendChild(badge);
   head.appendChild(name);
   head.appendChild(qw);
+  head.appendChild(dup);
   head.appendChild(rm);
 
   // Body: lines belonging to this set
@@ -2186,7 +2339,9 @@ function addSet(){
   // Events
   qty.addEventListener("input", recalcTotals);
   addBtn.addEventListener("click", ()=>addLine(body));
+  dup.addEventListener("click", ()=>duplicateSet(set));
   rm.addEventListener("click", ()=>{
+    pushUndo({type:"set", state:serializeSet(set), parent:set.parentNode, next:set.nextSibling});
     set.remove();
     ensureEmptyState();
     recalcTotals();
@@ -2195,15 +2350,24 @@ function addSet(){
   removeEmptyState();
   linesEl.appendChild(set);
 
-  // Seed the set with one line so it's immediately usable
-  addLine(body);
+  // Seed the set with one line so it's immediately usable (skipped when duplicating / restoring)
+  if(o.seed !== false) addLine(body);
   recalcTotals();
-  name.focus(); name.select();
+  if(o.focus !== false){ name.focus(); name.select(); }
+  return set;
 }
 
 /* ---------- Buttons ---------- */
 document.getElementById("addLine").addEventListener("click", ()=>addLine(linesEl));
-document.getElementById("addSet").addEventListener("click", addSet);
+document.getElementById("addSet").addEventListener("click", ()=>addSet());
+document.getElementById("undoBtn").addEventListener("click", undoDelete);
+document.addEventListener("keydown", e=>{
+  if((e.ctrlKey || e.metaKey) && (e.key === "z" || e.key === "Z")){
+    const t = e.target;
+    if(t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return; // let fields keep native undo
+    if(undoStack.length){ e.preventDefault(); undoDelete(); }
+  }
+});
 
 document.getElementById("clearAll").addEventListener("click", ()=>{
   linesEl.innerHTML="";
@@ -2270,9 +2434,21 @@ document.getElementById("printBtn").addEventListener("click", ()=>{
   const rateInput = document.getElementById("crewRate");
   const sizeInput = document.getElementById("crewSize");
   const presetSeg = document.getElementById("presetSeg");
+  const pctInput = document.getElementById("installPct");
+  const ohInput = document.getElementById("ohPct");
+  const contInput = document.getElementById("contPct");
 
   // Manual change to install scope or freight scenario = leaving a preset → Custom (% method)
-  scopeSel.addEventListener("change", e=>{ fiScopeIdx = +e.target.value; fiPreset = "custom"; fiInstallMethod = "pct"; syncFIControls(); recalcFI(); });
+  scopeSel.addEventListener("change", e=>{ fiScopeIdx = +e.target.value; fiScopePct = INSTALL_SCOPES[fiScopeIdx].pct; fiPreset = "custom"; fiInstallMethod = "pct"; syncFIControls(); recalcFI(); });
+  if(pctInput) pctInput.addEventListener("input", e=>{
+    fiScopePct = (parseFloat(e.target.value) || 0) / 100;
+    fiPreset = "custom"; fiInstallMethod = "pct";
+    if(scopeSel) scopeSel.disabled = false;
+    if(presetSeg) presetSeg.querySelectorAll(".seg-btn").forEach(b=>b.classList.toggle("active", b.dataset.v === "custom"));
+    recalcFI();
+  });
+  if(ohInput) ohInput.addEventListener("input", e=>{ fiOverheadPct = (parseFloat(e.target.value) || 0) / 100; recalcFI(); });
+  if(contInput) contInput.addEventListener("input", e=>{ fiContingencyPct = (parseFloat(e.target.value) || 0) / 100; recalcFI(); });
   modeSel.addEventListener("change", e=>{ fiModeIdx = +e.target.value; fiPreset = "custom"; fiInstallMethod = "pct"; syncFIControls(); recalcFI(); });
   // Cross-cutting inputs — don't change the preset
   regionSelL.addEventListener("change", e=>{ fiRegionIdx = +e.target.value; recalcFI(); });
