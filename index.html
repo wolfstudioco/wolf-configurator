@@ -1010,6 +1010,9 @@ const INSTALL_HRS_OVERRIDE = {
   "Retail wall display units":0.22,
   "Mixed-metal fabrication (feature pieces)":5,
   "Drapery, custom (per pair of panels)":1.5, "Roman shades, custom":0.75,
+  "Work desk":0.5, "Task / desk chair":0.4, "Coffee / cocktail table":0.35, "Decorative pillow":0.05,
+  "Custom glass top, small (nightstand)":0.5, "Custom glass top, large (credenza / console)":1.0,
+  "Cabinet door replacement / refacing":1.0, "Room partition / divider":2.0,
 };
 const INSTALL_HRS_GROUP = {
   "Architectural Millwork":{LF:0.30, SF:0.12, EA:5},
@@ -1112,7 +1115,16 @@ const CATEGORIES = [
   {group:"Restaurant Furniture", name:"Rectangular table, 24×48\" (trestle)", unit:"EA", tiers:{Economy:564, Standard:781, Premium:1279, "Ultra-premium":2143}},
   {group:"Restaurant Furniture", name:"Rectangular table, 30×48\" (trestle)", unit:"EA", tiers:{Economy:585, Standard:870, Premium:1344, "Ultra-premium":2237}},
   {group:"Restaurant Furniture", name:"Rectangular table, 30×60\" (trestle)", unit:"EA", tiers:{Economy:798, Standard:1156, Premium:1657, "Ultra-premium":2767}},
-  {group:"Restaurant Furniture", name:"Rectangular table, 30×72\" (trestle)", unit:"EA", tiers:{Economy:878, Standard:1203, Premium:1933, "Ultra-premium":3247}}
+  {group:"Restaurant Furniture", name:"Rectangular table, 30×72\" (trestle)", unit:"EA", tiers:{Economy:878, Standard:1203, Premium:1933, "Ultra-premium":3247}},
+
+  {group:"Hotel FF&E", name:"Work desk", unit:"EA", tiers:{Economy:750, Standard:1350, Premium:2500, "Ultra-premium":4750}},
+  {group:"Hotel FF&E", name:"Task / desk chair", unit:"EA", tiers:{Economy:350, Standard:650, Premium:1200, "Ultra-premium":2400}},
+  {group:"Hotel FF&E", name:"Coffee / cocktail table", unit:"EA", tiers:{Economy:450, Standard:900, Premium:1750, "Ultra-premium":3500}},
+  {group:"Upholstery", name:"Decorative pillow", unit:"EA", tiers:{Economy:45, Standard:95, Premium:200, "Ultra-premium":400}},
+  {group:"Glass & Specialty", name:"Custom glass top, small (nightstand)", unit:"EA", tiers:{Economy:125, Standard:185, Premium:275, "Ultra-premium":425}},
+  {group:"Glass & Specialty", name:"Custom glass top, large (credenza / console)", unit:"EA", tiers:{Economy:300, Standard:475, Premium:725, "Ultra-premium":1150}},
+  {group:"Architectural Millwork", name:"Cabinet door replacement / refacing", unit:"EA", tiers:{Economy:175, Standard:285, Premium:425, "Ultra-premium":675}},
+  {group:"Architectural Millwork", name:"Room partition / divider", unit:"LF", tiers:{Economy:350, Standard:650, Premium:1150, "Ultra-premium":1950}}
 ];
 
 const TIER_ORDER = ["Economy","Standard","Premium","Ultra-premium"];
@@ -1200,7 +1212,20 @@ const REST_NOTE = "Restaurant furniture at 2026 commercial contract pricing. Tab
 const GROUP_NOTES = {"Metalwork":GROUP_NOTE, "Upholstery":GROUP_NOTE, "Restaurant Furniture":REST_NOTE};
 
 /* Pick the right tier-definition set for a category. */
+/* Generic grade ladder for added freestanding-furniture / glass / specialty items. */
+const TIER_DEF_GRADE = {
+  "Economy":"value / contract-grade — standard materials, basic finish and hardware; budget-driven.",
+  "Standard":"mid commercial grade — quality materials and finish, where most hospitality specs land.",
+  "Premium":"upper-scale — premium materials, refined detail and finish.",
+  "Ultra-premium":"luxury / custom — top materials, custom detailing and execution."
+};
+const GRADE_ITEMS = new Set([
+  "Work desk","Task / desk chair","Coffee / cocktail table","Decorative pillow",
+  "Custom glass top, small (nightstand)","Custom glass top, large (credenza / console)",
+  "Cabinet door replacement / refacing","Room partition / divider"
+]);
 function tierDefFor(cat){
+  if(GRADE_ITEMS.has(cat.name)) return TIER_DEF_GRADE;
   if(cat.name === "Base cabinets" || cat.name === "Wall cabinets") return TIER_DEF_CABINET;
   if(cat.group === "Plumbing Fixtures") return cat.name === "Kitchen faucet" ? TIER_DEF_FAUCET : TIER_DEF_SINK;
   if(cat.group === "Doors") return TIER_DEF_DOOR;
@@ -1324,7 +1349,16 @@ const DETAILS = {
   "Rectangular table, 24×48\" (trestle)":{desc:"Rectangular dining table, 24×48\", on a steel trestle base. Seats 4. Priced each."},
   "Rectangular table, 30×48\" (trestle)":{desc:"Rectangular dining table, 30×48\", steel trestle base. Seats 4. Priced each."},
   "Rectangular table, 30×60\" (trestle)":{desc:"Rectangular dining table, 30×60\", steel trestle base. Seats 6. Priced each."},
-  "Rectangular table, 30×72\" (trestle)":{desc:"Rectangular dining table, 30×72\", steel trestle base. Seats 6–8. Priced each."}
+  "Rectangular table, 30×72\" (trestle)":{desc:"Rectangular dining table, 30×72\", steel trestle base. Seats 6–8. Priced each."},
+
+  "Work desk":{desc:"Freestanding commercial / hospitality work or writing desk (no chair). Priced each.", r:{Economy:[600,900], Standard:[1100,1650], Premium:[2000,3200], "Ultra-premium":[3800,6000]}},
+  "Task / desk chair":{desc:"Commercial ergonomic office / task chair — contract-grade up to designer ergonomic. Priced each.", r:{Economy:[275,475], Standard:[500,850], Premium:[950,1600], "Ultra-premium":[1800,3200]}},
+  "Coffee / cocktail table":{desc:"Freestanding hospitality lounge coffee / cocktail table. Priced each.", r:{Economy:[300,600], Standard:[650,1200], Premium:[1300,2400], "Ultra-premium":[2600,5000]}},
+  "Decorative pillow":{desc:"Hospitality decorative throw pillow (soft goods / OS&E). Priced each.", r:{Economy:[25,65], Standard:[70,130], Premium:[150,275], "Ultra-premium":[300,550]}},
+  "Custom glass top, small (nightstand)":{desc:"Custom tempered glass top for a nightstand or small table (~2–3 SF), polished edge. Priced each.", r:{Economy:[90,160], Standard:[140,240], Premium:[220,360], "Ultra-premium":[340,575]}},
+  "Custom glass top, large (credenza / console)":{desc:"Custom tempered glass top for a credenza or console (~6–9 SF), polished / beveled edge; Ultra is low-iron. Priced each.", r:{Economy:[220,400], Standard:[360,625], Premium:[560,950], "Ultra-premium":[900,1600]}},
+  "Cabinet door replacement / refacing":{desc:"Replace or reface a single cabinet door (door + hinge). Economy is a stock / laminate swap; upper tiers are custom wood / veneer with face-frame refacing. Priced per door.", r:{Economy:[130,240], Standard:[220,375], Premium:[340,575], "Ultra-premium":[525,950]}},
+  "Room partition / divider":{desc:"Freestanding office / hospitality partition or divider (~8 ft height). Economy is a demountable solid panel; upper tiers step up to framed / frameless feature glass. Per linear foot.", r:{Economy:[240,500], Standard:[475,875], Premium:[850,1500], "Ultra-premium":[1400,2600]}}
 };
 
 /* Merge descriptions + ranges into the category records. */
@@ -1411,7 +1445,10 @@ const SHAPE_BY_NAME = {
   "Rectangular table, 24×48\" (trestle)":"tableRect",
   "Rectangular table, 30×48\" (trestle)":"tableRect",
   "Rectangular table, 30×60\" (trestle)":"tableRect",
-  "Rectangular table, 30×72\" (trestle)":"tableRect"
+  "Rectangular table, 30×72\" (trestle)":"tableRect",
+  "Task / desk chair":"chair",
+  "Coffee / cocktail table":"tableRound",
+  "Cabinet door replacement / refacing":"doorPanel"
 };
 
 CATEGORIES.forEach(c=>{
