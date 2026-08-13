@@ -1013,7 +1013,7 @@ const INSTALL_HRS_OVERRIDE = {
   "Work desk":0.5, "Task / desk chair":0.4, "Coffee / cocktail table":0.35, "Decorative pillow":0.05,
   "Custom glass top, small (nightstand)":0.5, "Custom glass top, large (credenza / console)":1.0,
   "Cabinet door replacement / refacing":1.0, "Room partition / divider":2.0,
-  "Sofa, contract (per LF)":0.15,
+  "Sofa, contract (per LF)":0.15, "Mirror, wall (per SF)":0.12,
 };
 const INSTALL_HRS_GROUP = {
   "Architectural Millwork":{LF:0.30, SF:0.12, EA:5},
@@ -1122,11 +1122,12 @@ const CATEGORIES = [
   {group:"Hotel FF&E", name:"Work desk", unit:"EA", tiers:{Economy:750, Standard:1350, Premium:2500, "Ultra-premium":4750}},
   {group:"Hotel FF&E", name:"Task / desk chair", unit:"EA", tiers:{Economy:350, Standard:650, Premium:1200, "Ultra-premium":2400}},
   {group:"Hotel FF&E", name:"Coffee / cocktail table", unit:"EA", tiers:{Economy:450, Standard:900, Premium:1750, "Ultra-premium":3500}},
-  {group:"Upholstery", name:"Decorative pillow", unit:"EA", tiers:{Economy:45, Standard:95, Premium:200, "Ultra-premium":400}},
+  {group:"Upholstery", name:"Decorative pillow", unit:"EA", tiers:{Economy:45, Standard:75, Premium:125, "Ultra-premium":200}},
   {group:"Glass & Specialty", name:"Custom glass top, small (nightstand)", unit:"EA", tiers:{Economy:125, Standard:185, Premium:275, "Ultra-premium":425}},
   {group:"Glass & Specialty", name:"Custom glass top, large (credenza / console)", unit:"EA", tiers:{Economy:300, Standard:475, Premium:725, "Ultra-premium":1150}},
   {group:"Architectural Millwork", name:"Cabinet door replacement / refacing", unit:"EA", tiers:{Economy:175, Standard:285, Premium:425, "Ultra-premium":675}},
-  {group:"Architectural Millwork", name:"Room partition / divider", unit:"LF", tiers:{Economy:350, Standard:650, Premium:1150, "Ultra-premium":1950}}
+  {group:"Architectural Millwork", name:"Room partition / divider", unit:"LF", tiers:{Economy:350, Standard:650, Premium:1150, "Ultra-premium":1950}},
+  {group:"Glass & Specialty", name:"Mirror, wall (per SF)", unit:"SF", tiers:{Economy:30, Standard:44, Premium:68, "Ultra-premium":105}}
 ];
 
 const TIER_ORDER = ["Economy","Standard","Premium","Ultra-premium"];
@@ -1224,7 +1225,7 @@ const TIER_DEF_GRADE = {
 const GRADE_ITEMS = new Set([
   "Work desk","Task / desk chair","Coffee / cocktail table","Decorative pillow",
   "Custom glass top, small (nightstand)","Custom glass top, large (credenza / console)",
-  "Cabinet door replacement / refacing","Room partition / divider"
+  "Cabinet door replacement / refacing","Room partition / divider","Mirror, wall (per SF)"
 ]);
 function tierDefFor(cat){
   if(GRADE_ITEMS.has(cat.name)) return TIER_DEF_GRADE;
@@ -1357,11 +1358,12 @@ const DETAILS = {
   "Work desk":{desc:"Freestanding commercial / hospitality work or writing desk (no chair). Priced each.", r:{Economy:[600,900], Standard:[1100,1650], Premium:[2000,3200], "Ultra-premium":[3800,6000]}},
   "Task / desk chair":{desc:"Commercial ergonomic office / task chair — contract-grade up to designer ergonomic. Priced each.", r:{Economy:[275,475], Standard:[500,850], Premium:[950,1600], "Ultra-premium":[1800,3200]}},
   "Coffee / cocktail table":{desc:"Freestanding hospitality lounge coffee / cocktail table. Priced each.", r:{Economy:[300,600], Standard:[650,1200], Premium:[1300,2400], "Ultra-premium":[2600,5000]}},
-  "Decorative pillow":{desc:"Hospitality decorative throw pillow (soft goods / OS&E). Priced each.", r:{Economy:[25,65], Standard:[70,130], Premium:[150,275], "Ultra-premium":[300,550]}},
+  "Decorative pillow":{desc:"Hospitality decorative throw pillow (soft goods / OS&E). Priced each.", r:{Economy:[30,60], Standard:[60,95], Premium:[100,160], "Ultra-premium":[160,260]}},
   "Custom glass top, small (nightstand)":{desc:"Custom tempered glass top for a nightstand or small table (~2–3 SF), polished edge. Priced each.", r:{Economy:[90,160], Standard:[140,240], Premium:[220,360], "Ultra-premium":[340,575]}},
   "Custom glass top, large (credenza / console)":{desc:"Custom tempered glass top for a credenza or console (~6–9 SF), polished / beveled edge; Ultra is low-iron. Priced each.", r:{Economy:[220,400], Standard:[360,625], Premium:[560,950], "Ultra-premium":[900,1600]}},
   "Cabinet door replacement / refacing":{desc:"Replace or reface a single cabinet door (door + hinge). Economy is a stock / laminate swap; upper tiers are custom wood / veneer with face-frame refacing. Priced per door.", r:{Economy:[130,240], Standard:[220,375], Premium:[340,575], "Ultra-premium":[525,950]}},
-  "Room partition / divider":{desc:"Freestanding office / hospitality partition or divider (~8 ft height). Economy is a demountable solid panel; upper tiers step up to framed / frameless feature glass. Per linear foot.", r:{Economy:[240,500], Standard:[475,875], Premium:[850,1500], "Ultra-premium":[1400,2600]}}
+  "Room partition / divider":{desc:"See-through design partition / room divider (~8 ft height), fixed to floor — wood slats, metal grid, or open framework you can see through, not a solid demountable panel. Economy is a simple wood-slat screen; upper tiers step up to custom metal grid / mixed-material feature pieces with glass or mirror inserts. Fabricated and installed, priced per linear foot of run (~8 SF of face per LF). Pick the tier to match the design ambition.", r:{Economy:[240,500], Standard:[475,875], Premium:[850,1500], "Ultra-premium":[1400,2600]}},
+  "Mirror, wall (per SF)":{desc:"Wall-mounted mirror, supplied and set. Standard tier is 1/4\" clear mirror with swiped (polished) edge and safety backing — the spec on our Vos Glass cost (~$21/SF landed) — priced at ~2× cost. Economy is basic 1/4\" mirror, flat edge, no backing; Premium adds beveled / antiqued / tinted glass; Ultra is low-iron or custom-antiqued / shaped. Priced per square foot of mirror face.", r:{Economy:[26,36], Standard:[40,50], Premium:[58,80], "Ultra-premium":[90,125]}}
 };
 
 /* Merge descriptions + ranges into the category records. */
