@@ -38,6 +38,9 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 .opt.sel .wl{color:#e6b39e}
 .rec-tag{position:absolute;top:-8px;right:8px;background:#9b3925;color:#fff;font-size:9.5px;letter-spacing:.05em;font-weight:700;padding:2px 6px;border-radius:3px;text-transform:uppercase}
 .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+.total{display:flex;justify-content:space-between;align-items:baseline;border-top:2px solid #14181e;margin-top:22px;padding-top:14px}
+.tk{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:#4a473e}
+.tv{font-size:26px;font-weight:700;color:#14181e}
 .btn{background:#2c2c29;color:#fff;border:1px solid #4a4a46;border-radius:4px;padding:8px 13px;font-size:12.5px;font-weight:700;cursor:pointer;letter-spacing:.02em}
 .btn:hover{background:#3a3a36}
 .btn.pri{background:#9b3925;border-color:#9b3925}
@@ -48,6 +51,7 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 <p class="sub">Build your quote - Tiered options</p>
 <div class="howto"><b>How this works:</b> Each line shows four levels - tap the one you'd like. We've pre-selected a starting pick for each. Print or save a PDF to send back your selections. Prices are conceptual (±10-15%).</div>
 <div id="list"></div>
+<div class="total"><span class="tk">Furnishings Subtotal</span><span class="tv" id="goods">$0</span></div>
 <div class="actions">
  <button class="btn" onclick="resetRec()">Reset to recommended</button>
  <button class="btn pri" onclick="window.print()">Print / Save PDF</button>
@@ -92,10 +96,12 @@ function render(){
  update();
 }
 function update(){
+ let goods=0;
  ITEMS.forEach((it,i)=>{
-  const o=it.opts[sel[i]];
+  const o=it.opts[sel[i]]; if(o&&o.avail) goods+=qty[i]*o.unit;
   const p=document.getElementById('pick'+i); if(p)p.innerHTML=`${o.tier}`;
  });
+ const g=document.getElementById('goods'); if(g)g.textContent=money(goods);
 }
 function resetRec(){ITEMS.forEach((it,i)=>{sel[i]=it.opts.findIndex(o=>o.tierFull===it.rec);qty[i]=it.qty;});render();}
 render();
