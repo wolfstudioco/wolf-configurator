@@ -8,8 +8,8 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 .sub{color:#8a8676;font-size:13px;margin:0 0 4px}
 .howto{background:#f7f5e6;border:1px solid #e2ddc8;border-radius:4px;padding:11px 14px;font-size:13px;color:#4a473e;margin:14px 0 20px}
 .howto b{color:#14181e}
-.item{background:#f7f5e6;border:1px solid #e2ddc8;border-radius:6px;padding:14px 16px;margin-bottom:14px}
-.ihead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:11px}
+.item{position:relative;background:#f7f5e6;border:1px solid #e2ddc8;border-radius:6px;padding:14px 16px;margin-bottom:14px}
+.ihead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:11px;padding-right:28px}
 .iname{font-size:16px;font-weight:700}
 .iqty{color:#8a8676;font-size:12.5px;font-weight:400;margin-left:8px}
 .qtyin{width:44px;font:inherit;font-size:12.5px;font-weight:700;color:#14181e;background:transparent;border:none;border-bottom:1px dashed #b9b09a;padding:0 1px;cursor:pointer;text-align:left}
@@ -20,12 +20,11 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 .qhint{color:#8a8676;font-size:11px;font-style:italic;margin-left:6px}
 .irec{font-size:12px;color:#4a473e}.irec b{color:#9b3925}
 .ipick{font-size:13px;font-weight:700;white-space:nowrap}.ipick span{color:#8a8676;font-weight:400}
-.iright{display:flex;align-items:center;gap:10px}
-.rmbtn{background:transparent;border:1px solid #e2ddc8;color:#8a8676;border-radius:4px;padding:4px 9px;font:inherit;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;white-space:nowrap}
-.rmbtn:hover{border-color:#9b3925;color:#9b3925}
+.xbtn{position:absolute;top:9px;right:10px;width:23px;height:23px;padding:0;line-height:1;border:1px solid #e2ddc8;background:transparent;color:#8a8676;border-radius:4px;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.xbtn:hover{border-color:#9b3925;color:#9b3925}
 .item.removed{opacity:.5}
 .item.removed .opts{filter:grayscale(1);pointer-events:none}
-.item.removed .rmbtn{border-color:#9b3925;color:#9b3925}
+.item.removed .xbtn{border-color:#9b3925;color:#9b3925;opacity:1}
 .rmlbl{color:#8a8676;font-style:italic;font-weight:400}
 .barnote{font-size:12.5px;color:#4a473e;font-style:italic;margin:-4px 4px 14px}
 .opts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
@@ -64,7 +63,7 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 .btn:hover{background:#3a3a36}
 .btn.pri{background:#9b3925;border-color:#9b3925}
 .note{font-size:12px;color:#14181e;margin-top:16px;line-height:1.6}
-@media print{.actions{display:none} .undo{display:none} .rmbtn{display:none} .item.removed{display:none} body{padding-bottom:24px} .opt:not(.sel){display:none} .howto{display:none}}
+@media print{.actions{display:none} .undo{display:none} .xbtn{display:none} .item.removed{display:none} body{padding-bottom:24px} .opt:not(.sel){display:none} .howto{display:none}}
 </style></head><body><div class="wrap">
 <h1>WOLF | SHINOLA - Furniture Refresh</h1>
 <p class="sub">Build your quote - Tiered options</p>
@@ -84,7 +83,7 @@ const money=x=>x==null?"-":"$"+Math.round(x).toLocaleString();
 const sel=ITEMS.map(it=>it.opts.findIndex(o=>o.tierFull===it.rec));
 const qty=ITEMS.map(it=>it.qty);
 const removed=ITEMS.map(()=>false);
-function lowerBound(i){return ITEMS[i].sofa?30:(ITEMS[i].bar?0:ITEMS[i].qty);}
+function lowerBound(i){return 0;}
 const fmtq=n=>Number.isInteger(n)?n:n.toFixed(1);
 function render(){
  const L=document.getElementById('list'); L.innerHTML='';
@@ -99,9 +98,9 @@ function render(){
    opts+=`<div class="${cl}" data-i="${i}" data-j="${j}"><div class="otier">${o.tier}</div><div class="odesc">${o.desc}</div><div class="oprice">${priceHtml}</div><div class="ototal">${totalHtml}</div>${wl}</div>`;
   });
   const lb=lowerBound(i); const stp=(it.unit==='LF')?'0.5':'1';
-  const hint=it.sofa?'<span class="qhint">*qty minimum 30</span>':(it.bar?'<span class="qhint">per LF · optional</span>':'');
-  const rm=it.bar?`<button class="rmbtn" data-rm="${i}">${removed[i]?'+ Add to quote':'Remove'}</button>`:'';
-  d.innerHTML=`<div class="ihead"><div><span class="iname">${it.label}</span><span class="iqty">qty <input class="qtyin" type="number" step="${stp}" data-i="${i}" min="${lb}" value="${fmtq(qty[i])}" title="Edit quantity">${hint}</span></div><div class="iright"><div class="ipick" id="pick${i}"></div>${rm}</div></div><div class="opts">${opts}</div>`;
+  const hint=(it.unit==='LF')?'<span class="qhint">per LF</span>':'';
+  const xb=`<button class="xbtn" data-rm="${i}" title="${removed[i]?'Add back to quote':'Remove item'}">${removed[i]?'+':'×'}</button>`;
+  d.innerHTML=`${xb}<div class="ihead"><div><span class="iname">${it.label}</span><span class="iqty">qty <input class="qtyin" type="number" step="${stp}" data-i="${i}" min="${lb}" value="${fmtq(qty[i])}" title="Edit quantity">${hint}</span></div><div class="ipick" id="pick${i}"></div></div><div class="opts">${opts}</div>`;
   L.appendChild(d);
  });
  L.querySelectorAll('.opt').forEach(el=>{
@@ -119,7 +118,7 @@ function render(){
   });
   el.addEventListener('keydown',e=>{if(e.key==='Enter')el.blur();});
  });
- L.querySelectorAll('.rmbtn').forEach(el=>{
+ L.querySelectorAll('.xbtn').forEach(el=>{
   el.addEventListener('click',()=>{const i=+el.dataset.rm; snapshot(); removed[i]=!removed[i]; render();});
  });
  update();
