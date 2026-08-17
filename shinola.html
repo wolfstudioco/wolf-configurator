@@ -27,6 +27,22 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 .item.removed .xbtn{border-color:#9b3925;color:#9b3925;opacity:1}
 .rmlbl{color:#8a8676;font-style:italic;font-weight:400}
 .barnote{font-size:12.5px;color:#4a473e;font-style:italic;margin:-4px 4px 14px}
+.item.custom{border-left:3px solid #9b3925}
+.citag{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#9b3925;margin-left:8px}
+.cbudget{color:#8a8676;font-size:12.5px;margin-left:8px}
+.cin{width:64px;font:inherit;font-size:12.5px;font-weight:700;color:#14181e;background:transparent;border:none;border-bottom:1px dashed #b9b09a;padding:0 1px;text-align:left}
+.cin:hover{border-bottom-color:#9b3925}
+.cin:focus{outline:none;border-bottom:1px solid #9b3925}
+.cin::-webkit-inner-spin-button,.cin::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.additem{background:#f7f5e6;border:1px dashed #c3bba3;border-radius:6px;padding:14px 16px;margin-bottom:14px}
+.ai-title{font-size:12px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;color:#4a473e;margin-bottom:10px}
+.ai-row{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch}
+.ai-in{font:inherit;font-size:14px;color:#14181e;background:#eceada;border:1px solid #e2ddc8;border-radius:5px;padding:9px 11px}
+.ai-in:focus{outline:none;border-color:#9b3925}
+.ai-name{flex:1 1 260px;min-width:180px}
+.ai-num{width:130px}
+.ai-num::-webkit-inner-spin-button,.ai-num::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.ai-add{flex:0 0 auto}
 .opts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 @media(max-width:720px){.opts{grid-template-columns:repeat(2,1fr)}}
 .opt{border:1.5px solid #e2ddc8;border-radius:5px;padding:9px 10px;cursor:pointer;background:transparent;transition:.12s;position:relative}
@@ -63,12 +79,22 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 .btn:hover{background:#3a3a36}
 .btn.pri{background:#9b3925;border-color:#9b3925}
 .note{font-size:12px;color:#14181e;margin-top:16px;line-height:1.6}
-@media print{.actions{display:none} .undo{display:none} .xbtn{display:none} .item.removed{display:none} body{padding-bottom:24px} .opt:not(.sel){display:none} .howto{display:none}}
+@media print{.actions{display:none} .undo{display:none} .xbtn{display:none} .additem{display:none} .item.removed{display:none} body{padding-bottom:24px} .opt:not(.sel){display:none} .howto{display:none}}
 </style></head><body><div class="wrap">
 <h1>WOLF | SHINOLA - Furniture Refresh</h1>
 <p class="sub">Build your quote - Tiered options</p>
 <div class="howto"><b>How this works:</b> Each line shows four levels - tap the one you'd like. We've pre-selected a starting pick for each. Print or save a PDF to send back your selections. Prices are conceptual (±10-15%).</div>
 <div id="list"></div>
+<div id="customList"></div>
+<div class="additem">
+ <div class="ai-title">Add your own item</div>
+ <div class="ai-row">
+  <input id="ciName" class="ai-in ai-name" type="text" placeholder="Item description (e.g. custom console table)">
+  <input id="ciBudget" class="ai-in ai-num" type="number" min="0" step="1" placeholder="Budget $ each">
+  <input id="ciQty" class="ai-in ai-num" type="number" min="1" step="1" placeholder="Qty" value="1">
+  <button class="btn ai-add" id="ciAdd" onclick="addCustom()">+ Add</button>
+ </div>
+</div>
 <div class="total"><span class="tk">Furnishings Subtotal</span><span class="tv" id="goods">$0</span></div>
 <div class="notes"><label for="notesin">Notes / special requests</label><textarea id="notesin"></textarea></div>
 <div class="actions">
@@ -83,8 +109,10 @@ const money=x=>x==null?"-":"$"+Math.round(x).toLocaleString();
 const sel=ITEMS.map(it=>it.opts.findIndex(o=>o.tierFull===it.rec));
 const qty=ITEMS.map(it=>it.qty);
 const removed=ITEMS.map(()=>false);
+const custom=[];
 function lowerBound(i){return 0;}
 const fmtq=n=>Number.isInteger(n)?n:n.toFixed(1);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function render(){
  const L=document.getElementById('list'); L.innerHTML='';
  ITEMS.forEach((it,i)=>{
@@ -121,12 +149,34 @@ function render(){
  L.querySelectorAll('.xbtn').forEach(el=>{
   el.addEventListener('click',()=>{const i=+el.dataset.rm; snapshot(); removed[i]=!removed[i]; render();});
  });
+ renderCustom();
  update();
 }
+function renderCustom(){
+ const C=document.getElementById('customList'); if(!C)return; C.innerHTML='';
+ custom.forEach((c,k)=>{
+  const d=document.createElement('div'); d.className='item custom';
+  const tot=(c.qty||0)*(c.budget||0);
+  d.innerHTML=`<button class="xbtn" data-cx="${k}" title="Remove item">×</button><div class="ihead"><div><span class="iname">${esc(c.name)}</span><span class="citag">Added</span><span class="iqty">qty <input class="cin cqin" data-ck="${k}" type="number" min="0" step="1" value="${c.qty}"><span class="cbudget">@ $<input class="cin cbin" data-ck="${k}" type="number" min="0" step="1" value="${c.budget}"> each</span></span></div><div class="ipick">${money(tot)}</div></div>`;
+  C.appendChild(d);
+ });
+ C.querySelectorAll('.xbtn').forEach(el=>{el.addEventListener('click',()=>{const k=+el.dataset.cx; snapshot(); custom.splice(k,1); render();});});
+ C.querySelectorAll('.cqin').forEach(el=>{el.addEventListener('change',()=>{const k=+el.dataset.ck; let n=parseInt(el.value,10); if(isNaN(n)||n<0)n=0; snapshot(); custom[k].qty=n; render();});});
+ C.querySelectorAll('.cbin').forEach(el=>{el.addEventListener('change',()=>{const k=+el.dataset.ck; let n=parseFloat(el.value); if(isNaN(n)||n<0)n=0; snapshot(); custom[k].budget=n; render();});});
+}
+function addCustom(){
+ const nEl=document.getElementById('ciName'), bEl=document.getElementById('ciBudget'), qEl=document.getElementById('ciQty');
+ const name=(nEl.value||'').trim(); if(!name){nEl.focus();return;}
+ let b=parseFloat(bEl.value); if(isNaN(b)||b<0)b=0;
+ let q=parseInt(qEl.value,10); if(isNaN(q)||q<1)q=1;
+ snapshot(); custom.push({name:name,budget:b,qty:q});
+ nEl.value=''; bEl.value=''; qEl.value='1';
+ render(); nEl.focus();
+}
 const undoStack=[];
-function snapshot(){undoStack.push({s:sel.slice(),q:qty.slice(),r:removed.slice()}); if(undoStack.length>200)undoStack.shift(); updateUndoBtn();}
+function snapshot(){undoStack.push({s:sel.slice(),q:qty.slice(),r:removed.slice(),c:custom.map(o=>({...o}))}); if(undoStack.length>200)undoStack.shift(); updateUndoBtn();}
 function updateUndoBtn(){const u=document.getElementById('undoBtn'); if(u)u.disabled=undoStack.length===0;}
-function undo(){if(!undoStack.length)return; const st=undoStack.pop(); for(let i=0;i<sel.length;i++){sel[i]=st.s[i];qty[i]=st.q[i];removed[i]=st.r[i];} render(); updateUndoBtn();}
+function undo(){if(!undoStack.length)return; const st=undoStack.pop(); for(let i=0;i<sel.length;i++){sel[i]=st.s[i];qty[i]=st.q[i];removed[i]=st.r[i];} custom.splice(0,custom.length,...st.c.map(o=>({...o}))); render(); updateUndoBtn();}
 function sendEmail(){
  let lines=[], goods=0;
  ITEMS.forEach((it,i)=>{
@@ -145,6 +195,7 @@ function update(){
   const o=it.opts[sel[i]]; if(o&&o.avail&&!removed[i]) goods+=qty[i]*o.unit;
   const p=document.getElementById('pick'+i); if(p)p.innerHTML=removed[i]?'<span class="rmlbl">Not included</span>':`${o.tier}`;
  });
+ custom.forEach(c=>{goods+=(c.qty||0)*(c.budget||0);});
  const g=document.getElementById('goods'); if(g)g.textContent=money(goods);
 }
 render();
