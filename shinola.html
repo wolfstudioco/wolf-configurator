@@ -32,8 +32,12 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 .opt.sel .odesc{color:#cbc6b4}
 .oprice{font-size:16px;font-weight:700}
 .opt.sel .oprice{color:#faf7ea}
-.ototal{font-size:11.5px;color:#8a8676;margin-top:1px}
-.opt.sel .ototal{color:#98947d}
+.per{font-size:11px;font-weight:400;color:#8a8676}
+.opt.sel .per{color:#c7c2b1}
+.ototal{font-size:12px;color:#4a473e;margin-top:4px}
+.ototal .tl{font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;font-weight:700;color:#8a8676;margin-right:4px}
+.opt.sel .ototal{color:#ded9c7}
+.opt.sel .ototal .tl{color:#9e998c}
 .wl{font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#9b3925;margin-top:6px}
 .opt.sel .wl{color:#e6b39e}
 .rec-tag{position:absolute;top:-8px;right:8px;background:#9b3925;color:#fff;font-size:9.5px;letter-spacing:.05em;font-weight:700;padding:2px 6px;border-radius:3px;text-transform:uppercase}
@@ -44,6 +48,10 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 .undo{position:fixed;left:20px;bottom:18px;z-index:50;background:#14181e;color:#faf7ea;border:none;border-radius:22px;padding:10px 18px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.2)}
 .undo:hover:not(:disabled){background:#2a2f38}
 .undo:disabled{opacity:.3;cursor:default;box-shadow:none}
+.notes{margin-top:20px}
+.notes label{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:#4a473e;margin-bottom:6px}
+.notes textarea{width:100%;font:inherit;font-size:14px;color:#14181e;background:#f7f5e6;border:1px solid #e2ddc8;border-radius:5px;padding:10px 12px;resize:vertical;min-height:72px}
+.notes textarea:focus{outline:none;border-color:#9b3925}
 .btn{background:#2c2c29;color:#fff;border:1px solid #4a4a46;border-radius:4px;padding:8px 13px;font-size:12.5px;font-weight:700;cursor:pointer;letter-spacing:.02em}
 .btn:hover{background:#3a3a36}
 .btn.pri{background:#9b3925;border-color:#9b3925}
@@ -55,6 +63,7 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 <div class="howto"><b>How this works:</b> Each line shows four levels - tap the one you'd like. We've pre-selected a starting pick for each. Print or save a PDF to send back your selections. Prices are conceptual (±10-15%).</div>
 <div id="list"></div>
 <div class="total"><span class="tk">Furnishings Subtotal</span><span class="tv" id="goods">$0</span></div>
+<div class="notes"><label for="notesin">Notes / special requests (optional)</label><textarea id="notesin" placeholder="Anything you'd like us to know - questions, custom requests, items to skip..."></textarea></div>
 <div class="actions">
  <button class="btn pri" onclick="window.print()">Print / Save PDF</button>
 </div>
@@ -71,11 +80,13 @@ function render(){
  const L=document.getElementById('list'); L.innerHTML='';
  ITEMS.forEach((it,i)=>{
   const d=document.createElement('div'); d.className='item';
-  let opts='';
+  let opts=''; const ul=(it.unit==='LF')?'/LF':'ea';
   it.opts.forEach((o,j)=>{
    const cl=(!o.avail?'opt na':(j===sel[i]?'opt sel':'opt'));
    const wl=(o.tier==='Premium')?'<div class="wl">White Label available</div>':'';
-   opts+=`<div class="${cl}" data-i="${i}" data-j="${j}"><div class="otier">${o.tier}</div><div class="odesc">${o.desc}</div><div class="oprice">${o.avail?money(o.unit):'-'}</div><div class="ototal">${o.avail?money(qty[i]*o.unit)+' total':''}</div>${wl}</div>`;
+   const priceHtml=o.avail?(money(o.unit)+(qty[i]>1?' <span class="per">'+ul+'</span>':'')):'-';
+   const totalHtml=(o.avail&&qty[i]>1)?('<span class="tl">Total</span>'+money(qty[i]*o.unit)):'';
+   opts+=`<div class="${cl}" data-i="${i}" data-j="${j}"><div class="otier">${o.tier}</div><div class="odesc">${o.desc}</div><div class="oprice">${priceHtml}</div><div class="ototal">${totalHtml}</div>${wl}</div>`;
   });
   const lb=it.sofa?50:it.qty;
   const hint=it.sofa?'<span class="qhint">*qty minimum 30</span>':(it.bar?'<span class="qhint">priced per LF</span>':'');
@@ -103,6 +114,18 @@ const undoStack=[];
 function snapshot(){undoStack.push({s:sel.slice(),q:qty.slice()}); if(undoStack.length>200)undoStack.shift(); updateUndoBtn();}
 function updateUndoBtn(){const u=document.getElementById('undoBtn'); if(u)u.disabled=undoStack.length===0;}
 function undo(){if(!undoStack.length)return; const st=undoStack.pop(); for(let i=0;i<sel.length;i++){sel[i]=st.s[i];qty[i]=st.q[i];} render(); updateUndoBtn();}
+function sendEmail(){
+ let lines=[], goods=0;
+ ITEMS.forEach((it,i)=>{
+  const o=it.opts[sel[i]]; const t=o&&o.avail?qty[i]*o.unit:0; goods+=t;
+  lines.push(`- ${it.label} (qty ${qty[i]}): ${o.tier} = ${money(t)}`);
+ });
+ const notes=(document.getElementById('notesin')||{}).value||'';
+ let body="WOLF | SHINOLA - Furniture Refresh\nMy selections:\n\n"+lines.join("\n")+"\n\nFurnishings Subtotal: "+money(goods);
+ if(notes.trim()) body+="\n\nNotes:\n"+notes.trim();
+ body+="\n\n(Sent from the Wolf | Shinola quote tool)";
+ window.location.href="mailto:hello@wolfstudioco.com?subject="+encodeURIComponent("WOLF | SHINOLA - Furniture Refresh selections")+"&body="+encodeURIComponent(body);
+}
 function update(){
  let goods=0;
  ITEMS.forEach((it,i)=>{
