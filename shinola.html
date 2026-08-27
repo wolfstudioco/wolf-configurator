@@ -120,7 +120,7 @@ function render(){
   let opts=''; const ul=(it.unit==='LF')?'/LF':'ea';
   it.opts.forEach((o,j)=>{
    const cl=(!o.avail?'opt na':(j===sel[i]?'opt sel':'opt'));
-   const wl=(o.tier==='Premium')?'<div class="wl">White Label available</div>':'';
+   const wl=((it.bar&&o.tier==='Ultra')||(!it.bar&&o.tier==='Premium'))?'<div class="wl">White Label available</div>':'';
    const priceHtml=o.avail?(money(o.unit)+(qty[i]>1?' <span class="per">'+ul+'</span>':'')):'-';
    const totalHtml=(o.avail&&qty[i]>1)?('<span class="tl">Total</span>'+money(qty[i]*o.unit)):'';
    opts+=`<div class="${cl}" data-i="${i}" data-j="${j}"><div class="otier">${o.tier}</div><div class="odesc">${o.desc}</div><div class="oprice">${priceHtml}</div><div class="ototal">${totalHtml}</div>${wl}</div>`;
