@@ -26,6 +26,9 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 .xbtn{position:absolute;top:9px;right:10px;width:23px;height:23px;padding:0;line-height:1;border:1px solid #e2ddc8;background:transparent;color:#8a8676;border-radius:4px;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .xbtn:hover{border-color:#9b3925;color:#9b3925}
 .item.removed{opacity:.5}
+.item.zero .iname{color:#a79e8a}
+.item.zero .opts{filter:grayscale(.92);opacity:.5}
+.item.zero .why{opacity:.5}
 .item.removed .opts{filter:grayscale(1);pointer-events:none}
 .item.removed .xbtn{border-color:#9b3925;color:#9b3925;opacity:1}
 .rmlbl{color:#8a8676;font-style:italic;font-weight:400}
@@ -121,7 +124,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 function render(){
  const L=document.getElementById('list'); L.innerHTML='';
  ITEMS.forEach((it,i)=>{
-  const d=document.createElement('div'); d.className='item'+(removed[i]?' removed':'');
+  const d=document.createElement('div'); d.className='item'+(removed[i]?' removed':'')+(!removed[i]&&!it.tm&&qty[i]===0?' zero':'');
   if(it.tm){ d.innerHTML=`<button class="xbtn" data-rm="${i}" title="${removed[i]?'Add back to quote':'Remove item'}">${removed[i]?'+':'×'}</button><div class="ihead"><div><span class="iname">${it.label}</span></div><div class="ipick" id="pick${i}"></div></div><div class="tmline">${it.tmNote||'Billed time & materials'}</div>`; L.appendChild(d); return; }
   let opts=''; const ul=(it.unit==='LF')?'/LF':'ea';
   it.opts.forEach((o,j)=>{
