@@ -78,6 +78,8 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 .feerow{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid #e2ddc8}
 .feein{width:56px;padding:3px 6px;border:1px solid #cfc8b0;border-radius:4px;background:#fff;font:inherit;font-size:14px;text-align:right;margin:0 3px}
 .feerow .tk{font-weight:600}
+.clientmode .feerow,.clientmode #grandRow{display:none!important}
+.clientmode .qprev{display:none!important}
 .tv2{font-size:16px;font-weight:700;color:#14181e}
 .total.grand{margin-top:8px}
 .undo{position:fixed;left:20px;bottom:18px;z-index:50;background:#14181e;color:#faf7ea;border:none;border-radius:22px;padding:10px 18px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.2)}
@@ -113,7 +115,8 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 <div class="total grand" id="grandRow" style="display:none"><span class="tk">Total incl. designer fee</span><span class="tv" id="grand">$0</span></div>
 <div class="notes"><label for="notesin">Notes / special requests</label><textarea id="notesin"></textarea></div>
 <div class="actions">
- <button class="btn pri" onclick="window.print()">Print / Save PDF</button>
+ <button class="btn pri" onclick="printInternal()">Print / Save PDF</button>
+ <button class="btn" onclick="printClient()">Print / Save — Client version</button>
 </div>
 
 </div>
@@ -125,6 +128,8 @@ const sel=ITEMS.map(it=>it.opts.findIndex(o=>o.tierFull===it.rec));
 const qty=ITEMS.map(it=>it.qty);
 const removed=ITEMS.map(()=>false);
 const custom=[];
+let CLIENTPCT=0;
+function PM(){return document.body.classList.contains('clientmode')?(1+CLIENTPCT/100):1;}
 function lowerBound(i){return 0;}
 const fmtq=n=>Number.isInteger(n)?n:n.toFixed(1);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -137,8 +142,8 @@ function render(){
   it.opts.forEach((o,j)=>{
    const cl=(!o.avail?'opt na':(j===sel[i]?'opt sel':'opt'));
    const wl=((it.bar&&o.tier==='Ultra')||(!it.bar&&o.tier==='Premium'))?'<div class="wl">White Label available</div>':'';
-   const priceHtml=o.avail?(money(o.unit)+(qty[i]>1?' <span class="per">'+ul+'</span>':'')):'-';
-   const totalHtml=(o.avail&&qty[i]>1)?('<span class="tl">Total</span>'+money(qty[i]*o.unit)):'';
+   const priceHtml=o.avail?(money(o.unit*PM())+(qty[i]>1?' <span class="per">'+ul+'</span>':'')):'-';
+   const totalHtml=(o.avail&&qty[i]>1)?('<span class="tl">Total</span>'+money(qty[i]*o.unit*PM())):'';
    opts+=`<div class="${cl}" data-i="${i}" data-j="${j}"><div class="otier">${o.tier}</div><div class="odesc">${o.desc}</div><div class="oprice">${priceHtml}</div><div class="ototal">${totalHtml}</div>${wl}</div>`;
   });
   const lb=lowerBound(i); const stp=(it.unit==='LF')?'0.5':'1';
@@ -172,7 +177,7 @@ function renderCustom(){
  const C=document.getElementById('customList'); if(!C)return; C.innerHTML='';
  custom.forEach((c,k)=>{
   const d=document.createElement('div'); d.className='item custom';
-  const tot=(c.qty||0)*(c.budget||0);
+  const tot=(c.qty||0)*(c.budget||0)*PM();
   d.innerHTML=`<button class="xbtn" data-cx="${k}" title="Remove item">×</button><div class="ihead"><div><span class="iname">${esc(c.name)}</span><span class="citag">Added</span><span class="iqty">qty <input class="cin cqin" data-ck="${k}" type="number" min="0" step="1" value="${c.qty}"><span class="cbudget">@ $<input class="cin cbin" data-ck="${k}" type="number" min="0" step="1" value="${c.budget}"> each</span></span></div><div class="ipick">${money(tot)}</div></div>`;
   C.appendChild(d);
  });
@@ -193,6 +198,15 @@ const undoStack=[];
 function snapshot(){undoStack.push({s:sel.slice(),q:qty.slice(),r:removed.slice(),c:custom.map(o=>({...o}))}); if(undoStack.length>200)undoStack.shift(); updateUndoBtn();}
 function updateUndoBtn(){const u=document.getElementById('undoBtn'); if(u)u.disabled=undoStack.length===0;}
 function undo(){if(!undoStack.length)return; const st=undoStack.pop(); for(let i=0;i<sel.length;i++){sel[i]=st.s[i];qty[i]=st.q[i];removed[i]=st.r[i];} custom.splice(0,custom.length,...st.c.map(o=>({...o}))); render(); updateUndoBtn();}
+function printInternal(){window.print();}
+function printClient(){
+ const fp=document.getElementById('feePct'); CLIENTPCT=fp?(parseFloat(fp.value)||0):0;
+ document.body.classList.add('clientmode'); render();
+ const restore=()=>{document.body.classList.remove('clientmode'); render(); window.removeEventListener('afterprint',restore);};
+ window.addEventListener('afterprint',restore);
+ setTimeout(()=>window.print(),60);
+ setTimeout(()=>{if(document.body.classList.contains('clientmode')){document.body.classList.remove('clientmode'); render();}},4000);
+}
 function sendEmail(){
  let lines=[], goods=0;
  ITEMS.forEach((it,i)=>{
@@ -209,10 +223,10 @@ function update(){
  let goods=0;
  ITEMS.forEach((it,i)=>{
   if(it.tm){ const p=document.getElementById('pick'+i); if(p)p.innerHTML=removed[i]?'<span class="rmlbl">Not included</span>':'<span class="tmpick">Time &amp; materials</span>'; return; }
-  const o=it.opts[sel[i]]; if(o&&o.avail&&!removed[i]) goods+=qty[i]*o.unit;
+  const o=it.opts[sel[i]]; if(o&&o.avail&&!removed[i]) goods+=qty[i]*o.unit*PM();
   const p=document.getElementById('pick'+i); if(p)p.innerHTML=removed[i]?'<span class="rmlbl">Not included</span>':`${o.tier}`;
  });
- custom.forEach(c=>{goods+=(c.qty||0)*(c.budget||0);});
+ custom.forEach(c=>{goods+=(c.qty||0)*(c.budget||0)*PM();});
  const g=document.getElementById('goods'); if(g)g.textContent=money(goods);
  const fpEl=document.getElementById('feePct'); let pct=fpEl?parseFloat(fpEl.value):0; if(isNaN(pct)||pct<0)pct=0;
  const fee=goods*pct/100; const fa=document.getElementById('feeAmt'); if(fa)fa.textContent=money(fee);
