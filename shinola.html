@@ -75,6 +75,11 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 .tk{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:#4a473e}
 .tv{font-size:26px;font-weight:700;color:#14181e}
 .delivered{text-align:right;font-size:12px;color:#8a8676;margin:4px 0 0;letter-spacing:.01em}
+.feerow{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid #e2ddc8}
+.feein{width:56px;padding:3px 6px;border:1px solid #cfc8b0;border-radius:4px;background:#fff;font:inherit;font-size:14px;text-align:right;margin:0 3px}
+.feerow .tk{font-weight:600}
+.tv2{font-size:16px;font-weight:700;color:#14181e}
+.total.grand{margin-top:8px}
 .undo{position:fixed;left:20px;bottom:18px;z-index:50;background:#14181e;color:#faf7ea;border:none;border-radius:22px;padding:10px 18px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.2)}
 .undo:hover:not(:disabled){background:#2a2f38}
 .undo:disabled{opacity:.3;cursor:default;box-shadow:none}
@@ -104,6 +109,8 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 </div>
 <div class="total"><span class="tk">Furnishings Subtotal</span><span class="tv" id="goods">$0</span></div>
 <div class="delivered">+ Delivery avg +15%<br>+ Install avg +16%</div>
+<div class="feerow"><span class="tk">Designer fee <input id="feePct" class="feein" type="number" min="0" step="0.5" value="0" title="Designer fee %">%</span><span class="tv2" id="feeAmt">$0</span></div>
+<div class="total grand" id="grandRow" style="display:none"><span class="tk">Total incl. designer fee</span><span class="tv" id="grand">$0</span></div>
 <div class="notes"><label for="notesin">Notes / special requests</label><textarea id="notesin"></textarea></div>
 <div class="actions">
  <button class="btn pri" onclick="window.print()">Print / Save PDF</button>
@@ -207,8 +214,13 @@ function update(){
  });
  custom.forEach(c=>{goods+=(c.qty||0)*(c.budget||0);});
  const g=document.getElementById('goods'); if(g)g.textContent=money(goods);
+ const fpEl=document.getElementById('feePct'); let pct=fpEl?parseFloat(fpEl.value):0; if(isNaN(pct)||pct<0)pct=0;
+ const fee=goods*pct/100; const fa=document.getElementById('feeAmt'); if(fa)fa.textContent=money(fee);
+ const gr=document.getElementById('grand'), grRow=document.getElementById('grandRow');
+ if(gr)gr.textContent=money(goods+fee); if(grRow)grRow.style.display=pct>0?'flex':'none';
 }
 render();
 updateUndoBtn();
+(function(){const fp=document.getElementById('feePct'); if(fp)fp.addEventListener('input',update);})();
 </script>
 </body></html>
