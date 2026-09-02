@@ -3684,6 +3684,8 @@ recalcFI();
 
 
 
+
+
 /* <<< MARGIN MODULE BEGIN >>> */
 
 /* ============================================================
@@ -3754,7 +3756,7 @@ recalcFI();
     ".mg-panel:not(.mg-on){padding-bottom:16px;}",
     ".mg-panel:not(.mg-on) .mg-sub{margin-bottom:0;}",
     ".mg-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px 16px;margin-bottom:12px;}",
-    ".mg-grid2{grid-template-columns:120px minmax(220px,1fr) minmax(260px,1.3fr);}",
+    ".mg-grid2{grid-template-columns:120px;}",
     "@media(max-width:760px){.mg-grid2{grid-template-columns:1fr;}}",
     ".mg-f{display:flex;flex-direction:column;gap:5px;min-width:0;}",
     ".mg-f > span{font-family:var(--mark);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);}",
@@ -3860,15 +3862,7 @@ recalcFI();
     '</div>',
 
     '<div class="mg-grid mg-grid2">',
-    '  <label class="mg-f"><span>Fee</span><div class="mg-pct"><input id="mgPct" type="number" min="0" max="90" step="0.5" value="0"><em>%</em></div></label>',
-    '  <label class="mg-f"><span>Fee is a % of</span><select id="mgMode">',
-    '    <option value="margin">The client price</option>',
-    '    <option value="markup">The project estimate</option>',
-    '  </select></label>',
-    '  <label class="mg-f"><span>Applied to</span><select id="mgBase">',
-    '    <option value="allin">Everything — goods, freight &amp; install</option>',
-    '    <option value="goods">Goods only — freight &amp; install passed straight through</option>',
-    '  </select></label>',
+    '  <label class="mg-f"><span>Your fee</span><div class="mg-pct"><input id="mgPct" type="number" min="0" max="90" step="0.5" value="0"><em>%</em></div></label>',
     '</div>',
 
     '<div class="mg-read" id="mgRead"></div>',
@@ -3906,7 +3900,7 @@ recalcFI();
   if (!mount()) return;
 
   /* ---------- state ---------- */
-  var st = { by: "", for: "", proj: "", date: "", pct: 0, mode: "margin", base: "allin", on: false };
+  var st = { by: "", for: "", proj: "", date: "", pct: 0, on: false };
   try {
     var saved = JSON.parse(localStorage.getItem(MKEY) || "{}");
     Object.keys(st).forEach(function (k) { if (saved[k] !== undefined) st[k] = saved[k]; });
@@ -3919,7 +3913,6 @@ recalcFI();
     if (q.get("by")) st.by = q.get("by");
     if (q.get("for")) st["for"] = q.get("for");
     if (q.get("rate") && !isNaN(parseFloat(q.get("rate")))) st.pct = parseFloat(q.get("rate"));
-    if (q.get("method") === "markup" || q.get("method") === "margin") st.mode = q.get("method");
   } catch (e) { /* no URLSearchParams — ignore */ }
 
   if (!st.date) st.date = new Date().toISOString().slice(0, 10);
@@ -3929,9 +3922,6 @@ recalcFI();
   $("mgProj").value = st.proj;
   $("mgDate").value = st.date;
   $("mgPct").value = st.pct;
-  $("mgMode").value = st.mode;
-  $("mgBase").value = st.base;
-
   /* Open only if they had it open, or a fee is already set on this project —
      otherwise the panel is a closed line nobody has to think about. */
   setOpen(!!st.on || (parseFloat(st.pct) || 0) > 0);
@@ -3958,9 +3948,10 @@ recalcFI();
     if (r > 90) r = 90;
     return r / 100;
   }
-  function factor(r, mode) {
-    return mode === "markup" ? (1 + r) : (1 / (1 - r));
-  }
+  /* One operation, deliberately. The fee is added on top of the goods —
+     the way anyone says it out loud ("I add 25%"). Freight and install are
+     billed separately, so they pass through untouched and carry no fee. */
+  function factor(r) { return 1 + r; }
 
   /* Read the money off the rendered totals rather than recomputing it.
      One source of truth: whatever the console shows is what gets marked up. */
@@ -4029,11 +4020,9 @@ recalcFI();
   function build() {
     var c = costs();
     var r = rate();
-    var mode = $("mgMode").value;
-    var base = $("mgBase").value;
-    var f = factor(r, mode);
-    var gf = f;                              // goods factor
-    var ff = (base === "allin") ? f : 1;     // freight+install factor
+    var f = factor(r);
+    var gf = f;   // goods carry the fee
+    var ff = 1;   // freight & install pass through at cost
     var items = collect();
 
     var rows = [];
@@ -4068,9 +4057,7 @@ recalcFI();
 
     return {
       rows: rows, client: total, cost: c.all, margin: total - c.all,
-      f: f, r: r, mode: mode, base: base,
-      effMargin: total > 0 ? (total - c.all) / total : 0,
-      effMarkup: c.all > 0 ? (total - c.all) / c.all : 0
+      f: f, r: r
     };
   }
 
@@ -4083,17 +4070,9 @@ recalcFI();
       '<div class="mg-stat mg-client"><span class="mg-sl">Client price</span><span class="mg-sv">' + money(b.client) + '</span></div>'
     ].join("");
 
-    var pct = function (x) { return (100 * x).toFixed(1) + "%"; };
-    var warn = "";
-    if (b.mode === "margin" && b.r >= 0.5) {
-      warn = ' <span class="mg-warn">— above 50% of the client price your fee is bigger than the goods; ' +
-             'check you did not mean a % of the project estimate.</span>';
-    }
     $("mgEq").innerHTML = b.cost <= 0
       ? "Add lines to the estimate to price a proposal."
-      : ("Same fee, two ways of saying it: <b>" + pct(b.effMargin) + "</b> of the client price &nbsp;=&nbsp; <b>" +
-         pct(b.effMarkup) + "</b> of the project estimate." +
-         (b.base === "goods" ? " &nbsp;·&nbsp; freight &amp; install passed through" : "") + warn);
+      : "Your fee is added to the goods. Freight and installation are billed separately and carry no fee.";
   }
 
   /* ---------- proposal ---------- */
@@ -4169,13 +4148,12 @@ recalcFI();
   }
 
   /* ---------- wiring ---------- */
-  ["mgBy", "mgFor", "mgProj", "mgDate", "mgPct", "mgMode", "mgBase"].forEach(function (id) {
+  ["mgBy", "mgFor", "mgProj", "mgDate", "mgPct"].forEach(function (id) {
     var el = $(id);
     var ev = (el.tagName === "SELECT") ? "change" : "input";
     el.addEventListener(ev, function () {
       st.by = $("mgBy").value; st["for"] = $("mgFor").value; st.proj = $("mgProj").value;
       st.date = $("mgDate").value; st.pct = parseFloat($("mgPct").value) || 0;
-      st.mode = $("mgMode").value; st.base = $("mgBase").value;
       save();
       renderRead();
     });
