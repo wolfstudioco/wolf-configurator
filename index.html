@@ -3680,35 +3680,41 @@ recalcFI();
 
 
 
+
+
+
+
 /* <<< MARGIN MODULE BEGIN >>> */
 
 /* ============================================================
-   TRADE PRICING + CLIENT PROPOSAL             (margin.v1)
+   DESIGNER FEE + CLIENT PROPOSAL              (margin.v1)
 
    A designer, dealer, rep or GC opens the project page, enters their
    fee, and the app produces the client price and a proposal under
    their own name.
 
-   Language matters here. Internally this is a margin calculation; on
-   screen it is a professional fee, because that is what it actually
-   is — the specifier carries specification, procurement, coordination
-   and warranty administration, and gets paid for it. Nothing in this
-   panel should make the person using it look like they are padding a
-   number. So: "trade price", "professional fee", "client price". The
-   words margin, markup and upcharge appear nowhere in the interface.
+   Language matters here twice over. Internally this is a margin
+   calculation, but "margin"/"markup"/"upcharge" make the person using
+   it look like they are padding a number, so those words appear nowhere
+   in the interface. The first attempt swapped them for trade-and-
+   specifier vocabulary, which was worse: nobody should have to be told
+   what a "trade price" is. The rule now is plain words a client could
+   read over a shoulder without needing a glossary:
+
+       Project estimate  ->  Your fee  ->  Client price
 
    The arithmetic is still two different operations and confusing them
    is real money, so the basis is an explicit choice:
 
-       of the trade price   ->  client = trade * (1 + r)      [markup]
-       of the client price  ->  client = trade / (1 - r)      [margin]
+       % of the estimate     ->  client = cost * (1 + r)      [markup]
+       % of the client price ->  client = cost / (1 - r)      [margin]
 
-   A fee of 40% of trade is 28.6% of the client price. The panel shows
-   both equivalents so nobody has to trust a label.
+   A fee of 40% of cost is 28.6% of the client price. The panel states
+   both so nobody has to trust a label.
 
    The fee is always carried inside item pricing on the client
    document. The client sees delivered prices and a total — never the
-   trade price, the fee, or the rate.
+   cost, the fee, or the rate.
 
    Rows are rounded first and the total is the sum of the rounded rows,
    so the client document always adds up on paper.
@@ -3737,6 +3743,16 @@ recalcFI();
     ".mg-title{font-family:var(--mark);font-size:11px;letter-spacing:.2em;text-transform:uppercase;",
     "  color:var(--ink);margin:0 0 6px;font-weight:400;}",
     ".mg-sub{font-size:11.5px;color:var(--ink-faint);line-height:1.5;max-width:70ch;margin:0 0 16px;}",
+    ".mg-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;}",
+    ".mg-body{display:none;}",
+    ".mg-panel.mg-on .mg-body{display:block;}",
+    ".mg-toggle{margin-left:auto;font-family:var(--mark);font-size:9.5px;letter-spacing:.13em;",
+    "  text-transform:uppercase;padding:7px 13px;border:1px solid var(--line);border-radius:4px;",
+    "  background:#fff;color:var(--ink);cursor:pointer;white-space:nowrap;}",
+    ".mg-toggle:hover{border-color:var(--ink);}",
+    ".mg-panel.mg-on .mg-toggle{background:var(--ink);color:#fff;border-color:var(--ink);}",
+    ".mg-panel:not(.mg-on){padding-bottom:16px;}",
+    ".mg-panel:not(.mg-on) .mg-sub{margin-bottom:0;}",
     ".mg-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px 16px;margin-bottom:12px;}",
     ".mg-grid2{grid-template-columns:120px minmax(220px,1fr) minmax(260px,1.3fr);}",
     "@media(max-width:760px){.mg-grid2{grid-template-columns:1fr;}}",
@@ -3827,11 +3843,15 @@ recalcFI();
   panel.className = "mg-panel no-print";
   panel.id = "mgPanel";
   panel.innerHTML = [
-    '<h2 class="mg-title">Trade pricing &amp; client proposal</h2>',
-    '<div class="mg-sub">For a designer, dealer, rep or general contractor carrying this package to their own client. ',
-    'Set your professional fee for specification, procurement, coordination and warranty administration, ',
-    'then issue a line-item proposal under your own name.</div>',
+    '<div class="mg-head">',
+    '  <h2 class="mg-title">Designer fee &amp; client proposal</h2>',
+    '  <button class="mg-toggle" id="mgOn" type="button" aria-expanded="false">Add a fee</button>',
+    '</div>',
+    '<div class="mg-sub">Optional. Only for a designer, dealer or contractor pricing this package to ',
+    'their own client — add your fee and print a proposal under your own name. ',
+    'The estimate and your fee never appear on it. Leave it closed and nothing changes.</div>',
 
+    '<div class="mg-body">',
     '<div class="mg-grid">',
     '  <label class="mg-f"><span>Prepared by</span><input id="mgBy" type="text" placeholder="Studio / firm name" autocomplete="organization"></label>',
     '  <label class="mg-f"><span>Prepared for</span><input id="mgFor" type="text" placeholder="Client name"></label>',
@@ -3841,13 +3861,13 @@ recalcFI();
 
     '<div class="mg-grid mg-grid2">',
     '  <label class="mg-f"><span>Fee</span><div class="mg-pct"><input id="mgPct" type="number" min="0" max="90" step="0.5" value="0"><em>%</em></div></label>',
-    '  <label class="mg-f"><span>Calculated</span><select id="mgMode">',
-    '    <option value="margin">Of the client price</option>',
-    '    <option value="markup">Of the trade price</option>',
+    '  <label class="mg-f"><span>Fee is a % of</span><select id="mgMode">',
+    '    <option value="margin">The client price</option>',
+    '    <option value="markup">The project estimate</option>',
     '  </select></label>',
-    '  <label class="mg-f"><span>Fee basis</span><select id="mgBase">',
-    '    <option value="allin">Full delivered scope — goods, freight &amp; install</option>',
-    '    <option value="goods">Furnished goods only — freight &amp; install at cost</option>',
+    '  <label class="mg-f"><span>Applied to</span><select id="mgBase">',
+    '    <option value="allin">Everything — goods, freight &amp; install</option>',
+    '    <option value="goods">Goods only — freight &amp; install passed straight through</option>',
     '  </select></label>',
     '</div>',
 
@@ -3858,6 +3878,7 @@ recalcFI();
     '  <button id="mgProposal" class="mg-btn mg-btn-p" type="button">Client proposal</button>',
     '  <button id="mgWorking" class="mg-btn" type="button">Print working estimate</button>',
     '  <span class="mg-note">Print dialog &rarr; Destination: <b>Save as PDF</b>.</span>',
+    '</div>',
     '</div>'
   ].join("\n");
 
@@ -3885,7 +3906,7 @@ recalcFI();
   if (!mount()) return;
 
   /* ---------- state ---------- */
-  var st = { by: "", for: "", proj: "", date: "", pct: 0, mode: "margin", base: "allin" };
+  var st = { by: "", for: "", proj: "", date: "", pct: 0, mode: "margin", base: "allin", on: false };
   try {
     var saved = JSON.parse(localStorage.getItem(MKEY) || "{}");
     Object.keys(st).forEach(function (k) { if (saved[k] !== undefined) st[k] = saved[k]; });
@@ -3911,12 +3932,25 @@ recalcFI();
   $("mgMode").value = st.mode;
   $("mgBase").value = st.base;
 
+  /* Open only if they had it open, or a fee is already set on this project —
+     otherwise the panel is a closed line nobody has to think about. */
+  setOpen(!!st.on || (parseFloat(st.pct) || 0) > 0);
+
   function save() {
     try { localStorage.setItem(MKEY, JSON.stringify(st)); } catch (e) {}
   }
 
+  function setOpen(on) {
+    panel.classList.toggle("mg-on", !!on);
+    var b = $("mgOn");
+    b.textContent = on ? "Remove fee" : "Add a fee";
+    b.setAttribute("aria-expanded", on ? "true" : "false");
+  }
+
   /* ---------- arithmetic ---------- */
   function rate() {
+    // Closed panel = no fee. Not "0% entered" — the feature is simply not in play.
+    if (!panel.classList.contains("mg-on")) return 0;
     var r = parseFloat($("mgPct").value);
     if (isNaN(r) || r < 0) r = 0;
     // A margin of 100% is division by zero and a margin above ~90% is
@@ -4044,22 +4078,22 @@ recalcFI();
   function renderRead() {
     var b = build();
     $("mgRead").innerHTML = [
-      '<div class="mg-stat"><span class="mg-sl">Trade price</span><span class="mg-sv">' + money(b.cost) + '</span></div>',
-      '<div class="mg-stat"><span class="mg-sl">Professional fee</span><span class="mg-sv">' + money(b.margin) + '</span></div>',
+      '<div class="mg-stat"><span class="mg-sl">Project estimate</span><span class="mg-sv">' + money(b.cost) + '</span></div>',
+      '<div class="mg-stat"><span class="mg-sl">Your fee</span><span class="mg-sv">' + money(b.margin) + '</span></div>',
       '<div class="mg-stat mg-client"><span class="mg-sl">Client price</span><span class="mg-sv">' + money(b.client) + '</span></div>'
     ].join("");
 
     var pct = function (x) { return (100 * x).toFixed(1) + "%"; };
     var warn = "";
     if (b.mode === "margin" && b.r >= 0.5) {
-      warn = ' <span class="mg-warn">— above 50% of the client price the fee exceeds the goods; ' +
-             'check you did not mean of the trade price.</span>';
+      warn = ' <span class="mg-warn">— above 50% of the client price your fee is bigger than the goods; ' +
+             'check you did not mean a % of the project estimate.</span>';
     }
     $("mgEq").innerHTML = b.cost <= 0
       ? "Add lines to the estimate to price a proposal."
-      : ("Stated either way: <b>" + pct(b.effMargin) + "</b> of the client price &nbsp;=&nbsp; <b>" +
-         pct(b.effMarkup) + "</b> of the trade price &nbsp;·&nbsp; " + b.f.toFixed(3) + "×" +
-         (b.base === "goods" ? " &nbsp;·&nbsp; freight &amp; install at cost" : "") + warn);
+      : ("Same fee, two ways of saying it: <b>" + pct(b.effMargin) + "</b> of the client price &nbsp;=&nbsp; <b>" +
+         pct(b.effMarkup) + "</b> of the project estimate." +
+         (b.base === "goods" ? " &nbsp;·&nbsp; freight &amp; install passed through" : "") + warn);
   }
 
   /* ---------- proposal ---------- */
@@ -4145,6 +4179,17 @@ recalcFI();
       save();
       renderRead();
     });
+  });
+
+  $("mgOn").addEventListener("click", function () {
+    var opening = !panel.classList.contains("mg-on");
+    setOpen(opening);
+    // Closing clears the rate as well as hiding it — a hidden fee still
+    // applying to the numbers is exactly the surprise this feature must not be.
+    if (!opening) { $("mgPct").value = 0; st.pct = 0; }
+    st.on = opening;
+    save();
+    renderRead();
   });
 
   $("mgProposal").addEventListener("click", function () {
