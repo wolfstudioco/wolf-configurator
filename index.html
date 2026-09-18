@@ -3736,6 +3736,11 @@ recalcFI();
 
 
 
+
+
+
+
+
 /* <<< MARGIN MODULE BEGIN >>> */
 
 /* ============================================================
@@ -4487,6 +4492,326 @@ recalcFI();
 })();
 
 /* <<< PROJECTFILE MODULE END >>> */
+
+/* <<< SHARE MODULE BEGIN >>> */
+
+/* ============================================================
+   SHARED ESTIMATE LINKS                        (share.v1)
+
+   One URL per client, password protected, editable afterwards:
+
+       wolfstudioco.com/<client-page>        Squarespace page password
+         └─ iframe → index.html?e=<slug>
+                       └─ estimates/<slug>.json
+
+   The repo is PUBLIC. A Squarespace page password protects the page,
+   not the file — anyone holding the raw GitHub URL could read an
+   unencrypted estimate whether or not they ever saw the page. So the
+   saved file is ciphertext: AES-GCM, key stretched from the passphrase
+   with PBKDF2-SHA256. Without the passphrase the file is noise, which
+   makes "password protected" true rather than decorative.
+
+   Editing later is the point of the whole thing: re-save over the same
+   slug with the same passphrase and the client's URL — which never
+   changes — shows the new scope on reload.
+
+   The client sees a locked sheet, not the console. Rather than
+   maintaining a second layout that would drift, the shared view mirrors
+   the app's own @media print rules onto the screen at runtime: whatever
+   prints is exactly what the client sees, permanently in step.
+
+   Crypto notes, so the choices are auditable rather than assumed:
+     - PBKDF2-SHA256, 310,000 iterations (OWASP 2023 floor)
+     - 16-byte random salt per file, 12-byte random IV per file
+     - AES-GCM 256 — authenticated, so a tampered file fails to open
+       instead of opening wrong
+   ============================================================ */
+(function () {
+  "use strict";
+
+  var FORMAT = 1;
+  var APP = "wolf-configurator";
+  var KDF_ITER = 310000;
+  var $ = function (id) { return document.getElementById(id); };
+
+  var enc = new TextEncoder();
+  var dec = new TextDecoder();
+
+  var b64 = {
+    to: function (buf) {
+      var b = new Uint8Array(buf), s = "";
+      for (var i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
+      return btoa(s);
+    },
+    from: function (str) {
+      var s = atob(str), b = new Uint8Array(s.length);
+      for (var i = 0; i < s.length; i++) b[i] = s.charCodeAt(i);
+      return b;
+    }
+  };
+
+  function deriveKey(pass, salt) {
+    return crypto.subtle.importKey("raw", enc.encode(pass), "PBKDF2", false, ["deriveKey"])
+      .then(function (base) {
+        return crypto.subtle.deriveKey(
+          { name: "PBKDF2", salt: salt, iterations: KDF_ITER, hash: "SHA-256" },
+          base, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+      });
+  }
+
+  function encryptPayload(obj, pass) {
+    var salt = crypto.getRandomValues(new Uint8Array(16));
+    var iv = crypto.getRandomValues(new Uint8Array(12));
+    return deriveKey(pass, salt).then(function (key) {
+      return crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, enc.encode(JSON.stringify(obj)));
+    }).then(function (ct) {
+      return {
+        app: APP, format: FORMAT, enc: "AES-GCM-256/PBKDF2-SHA256",
+        iterations: KDF_ITER, salt: b64.to(salt), iv: b64.to(iv),
+        ct: b64.to(ct), savedAt: new Date().toISOString()
+      };
+    });
+  }
+
+  function decryptPayload(file, pass) {
+    var salt = b64.from(file.salt), iv = b64.from(file.iv);
+    return crypto.subtle.importKey("raw", enc.encode(pass), "PBKDF2", false, ["deriveKey"])
+      .then(function (base) {
+        return crypto.subtle.deriveKey(
+          { name: "PBKDF2", salt: salt, iterations: file.iterations || KDF_ITER, hash: "SHA-256" },
+          base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+      })
+      .then(function (key) {
+        return crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, key, b64.from(file.ct));
+      })
+      .then(function (pt) { return JSON.parse(dec.decode(pt)); });
+  }
+
+  /* ---------- styling ---------- */
+  var css = document.createElement("style");
+  css.id = "shOwn";
+  css.textContent = [
+    /* share dialog + button */
+    ".sh-btn{font-family:var(--mark);font-size:10px;letter-spacing:.14em;text-transform:uppercase;",
+    "  padding:10px 16px;border:1px solid var(--line);border-radius:4px;background:#fff;",
+    "  color:var(--ink);cursor:pointer;}",
+    ".sh-btn:hover{border-color:var(--ink);}",
+    ".sh-modal{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;",
+    "  background:rgba(14,17,20,.55);padding:20px;}",
+    ".sh-modal.on{display:flex;}",
+    ".sh-card{background:#fff;border-radius:var(--radius);padding:26px 28px;max-width:540px;width:100%;",
+    "  box-shadow:0 24px 60px rgba(0,0,0,.28);}",
+    ".sh-h{font-family:var(--mark);font-size:11px;letter-spacing:.2em;text-transform:uppercase;margin:0 0 8px;}",
+    ".sh-p{font-size:12px;color:var(--ink-faint);line-height:1.55;margin:0 0 16px;}",
+    ".sh-f{display:flex;flex-direction:column;gap:5px;margin-bottom:13px;}",
+    ".sh-f span{font-family:var(--mark);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);}",
+    ".sh-f input{border:1px solid var(--line);border-radius:4px;padding:9px 11px;font:inherit;font-size:13px;}",
+    ".sh-f input:focus{outline:none;border-color:var(--ink);}",
+    ".sh-row{display:flex;gap:9px;align-items:center;margin-top:18px;}",
+    ".sh-msg{font-size:11.5px;color:var(--ink-faint);margin-top:12px;line-height:1.5;}",
+    ".sh-msg.sh-err{color:#8a6d3b;font-weight:600;}",
+    ".sh-msg code{font-family:var(--disp);background:var(--paper);padding:1px 5px;border-radius:3px;}",
+    /* the client's locked sheet */
+    "body.sh-view .no-print,body.sh-view #mgPanel,body.sh-view #pfBar,",
+    "body.sh-view .ace-projbar,body.sh-view #fiSection{display:none !important;}",
+    "body.sh-view .sh-bar{display:flex;}",
+    ".sh-bar{display:none;align-items:center;gap:14px;background:var(--ink);color:#fff;",
+    "  padding:12px 22px;margin:0 0 20px;flex-wrap:wrap;}",
+    ".sh-bar .sh-l{font-family:var(--mark);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#8d939a;}",
+    ".sh-bar .sh-n{font-weight:600;font-size:15px;}",
+    ".sh-bar button{margin-left:auto;font-family:var(--mark);font-size:10px;letter-spacing:.14em;",
+    "  text-transform:uppercase;padding:8px 14px;border:1px solid #fff;border-radius:4px;",
+    "  background:#fff;color:var(--ink);cursor:pointer;}",
+    "@media print{.sh-bar{display:none !important;}}",
+    /* nothing in the locked sheet may be typed into */
+    "body.sh-view input,body.sh-view select,body.sh-view button:not(.sh-bar button){pointer-events:none !important;}",
+    /* gate */
+    ".sh-gate{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;",
+    "  background:var(--paper);padding:20px;}",
+    ".sh-gate .sh-card{max-width:420px;}"
+  ].join("\n");
+  document.head.appendChild(css);
+
+  /* Mirror the app's own print rules onto the screen for the shared view, so
+     the client's sheet and the printed sheet can never drift apart. */
+  function mirrorPrintRules() {
+    var out = [];
+    for (var i = 0; i < document.styleSheets.length; i++) {
+      var sheet = document.styleSheets[i], rules;
+      // Skip this module's own sheet: it carries an @media print rule that hides
+      // the shared-view header, and mirroring that would hide it on screen too.
+      if (sheet.ownerNode && sheet.ownerNode.id === "shOwn") continue;
+      try { rules = sheet.cssRules; } catch (e) { continue; }
+      if (!rules) continue;
+      for (var j = 0; j < rules.length; j++) {
+        var r = rules[j];
+        if (r.type !== CSSRule.MEDIA_RULE) continue;
+        if (!/print/.test(r.conditionText || r.media.mediaText || "")) continue;
+        for (var k = 0; k < r.cssRules.length; k++) {
+          var inner = r.cssRules[k];
+          if (!inner.selectorText) continue;
+          var sel = inner.selectorText.split(",").map(function (s) {
+            s = s.trim();
+            if (/^:root/.test(s)) return "body.sh-view";
+            if (/^body\b/.test(s)) return s.replace(/^body\b/, "body.sh-view");
+            return "body.sh-view " + s;
+          }).join(",");
+          out.push(sel + "{" + inner.style.cssText + "}");
+        }
+      }
+    }
+    var st = document.createElement("style");
+    st.id = "shMirror";
+    st.textContent = out.join("\n");
+    document.head.appendChild(st);
+    return out.length;
+  }
+
+  /* ---------- save: produce the encrypted file ---------- */
+  var modal = document.createElement("div");
+  modal.className = "sh-modal";
+  modal.id = "shModal";
+  modal.innerHTML = [
+    '<div class="sh-card">',
+    '  <h3 class="sh-h">Share with client</h3>',
+    '  <p class="sh-p">Saves this estimate as an encrypted file. Commit it to ',
+    '    <code>estimates/</code> in the repo, then send the client the page link and the passphrase. ',
+    '    Re-save over the same name later and their link shows the new scope.</p>',
+    '  <label class="sh-f"><span>File name</span><input id="shSlug" type="text" placeholder="northport"></label>',
+    '  <label class="sh-f"><span>Passphrase for the client</span><input id="shPass" type="text" placeholder="something you can say over the phone"></label>',
+    '  <div class="sh-row">',
+    '    <button class="sh-btn" id="shMake" type="button" style="background:var(--ink);color:#fff;border-color:var(--ink)">Create file</button>',
+    '    <button class="sh-btn" id="shCancel" type="button">Cancel</button>',
+    '  </div>',
+    '  <div class="sh-msg" id="shMsg"></div>',
+    '</div>'
+  ].join("\n");
+
+  var bar = document.createElement("div");
+  bar.className = "sh-bar";
+  bar.innerHTML = '<span class="sh-l">Estimate</span><span class="sh-n" id="shName"></span>' +
+                  '<span class="sh-l" id="shDate"></span>' +
+                  '<button id="shPrint" type="button">Print / save PDF</button>';
+
+  function mount() {
+    document.body.appendChild(modal);
+    var wrap = document.querySelector(".wrap");
+    if (wrap) wrap.insertBefore(bar, wrap.firstChild);
+    // sit next to the project-file buttons
+    var host = $("pfBar");
+    if (host) {
+      var b = document.createElement("button");
+      b.className = "sh-btn"; b.id = "shOpen"; b.type = "button";
+      b.textContent = "Share with client";
+      b.style.marginLeft = "8px";
+      host.appendChild(b);
+      b.addEventListener("click", function () {
+        var pj = $("mgProj");
+        if (pj && pj.value.trim() && !$("shSlug").value) $("shSlug").value = slug(pj.value);
+        modal.classList.add("on");
+      });
+    }
+    return true;
+  }
+
+  function slug(s) {
+    return (s || "estimate").toLowerCase().replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "").slice(0, 60) || "estimate";
+  }
+
+  if (!mount()) return;
+
+  $("shCancel").addEventListener("click", function () { modal.classList.remove("on"); });
+  modal.addEventListener("click", function (e) { if (e.target === modal) modal.classList.remove("on"); });
+
+  $("shMake").addEventListener("click", function () {
+    var name = slug($("shSlug").value);
+    var pass = $("shPass").value;
+    var msg = $("shMsg");
+    if (!pass || pass.length < 4) { msg.textContent = "Give it a passphrase of at least 4 characters."; msg.className = "sh-msg sh-err"; return; }
+    if (!window.aceProjectFile) { msg.textContent = "Project serialisation is unavailable in this build."; msg.className = "sh-msg sh-err"; return; }
+
+    var payload = window.aceProjectFile.read();
+    payload.title = ($("mgProj") && $("mgProj").value.trim()) || name;
+    msg.textContent = "Encrypting…"; msg.className = "sh-msg";
+
+    encryptPayload(payload, pass).then(function (file) {
+      file.title = payload.title;
+      var blob = new Blob([JSON.stringify(file, null, 2)], { type: "application/json" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url; a.download = name + ".json";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      msg.innerHTML = "Saved <code>" + name + ".json</code>. Commit it to <code>estimates/</code>, " +
+        "then the client's link is <code>?e=" + name + "</code>.";
+      msg.className = "sh-msg";
+    }).catch(function (e) {
+      msg.textContent = "Could not encrypt: " + e.message; msg.className = "sh-msg sh-err";
+    });
+  });
+
+  $("shPrint").addEventListener("click", function () { window.print(); });
+
+  /* ---------- load: the client's view ---------- */
+  var slugParam = null;
+  try { slugParam = new URLSearchParams(location.search).get("e"); } catch (e) {}
+  if (!slugParam) { window.aceShare = { encrypt: encryptPayload, decrypt: decryptPayload }; return; }
+
+  var gate = document.createElement("div");
+  gate.className = "sh-gate";
+  gate.innerHTML = [
+    '<div class="sh-card">',
+    '  <h3 class="sh-h">Wolf Studio — estimate</h3>',
+    '  <p class="sh-p">This estimate is protected. Enter the passphrase you were given.</p>',
+    '  <label class="sh-f"><span>Passphrase</span><input id="shGatePass" type="password" autocomplete="off"></label>',
+    '  <div class="sh-row"><button class="sh-btn" id="shGateGo" type="button" ',
+    '    style="background:var(--ink);color:#fff;border-color:var(--ink)">Open estimate</button></div>',
+    '  <div class="sh-msg" id="shGateMsg"></div>',
+    '</div>'
+  ].join("\n");
+  document.body.appendChild(gate);
+
+  var fileCache = null;
+  fetch("estimates/" + slugParam + ".json", { cache: "no-store" })
+    .then(function (r) { if (!r.ok) throw new Error("not found"); return r.json(); })
+    .then(function (f) { fileCache = f; })
+    .catch(function () {
+      $("shGateMsg").textContent = "That estimate could not be found.";
+      $("shGateMsg").className = "sh-msg sh-err";
+    });
+
+  function openIt() {
+    var pass = $("shGatePass").value;
+    var msg = $("shGateMsg");
+    if (!fileCache) { msg.textContent = "That estimate could not be found."; msg.className = "sh-msg sh-err"; return; }
+    msg.textContent = "Opening…"; msg.className = "sh-msg";
+    decryptPayload(fileCache, pass).then(function (payload) {
+      window.aceProjectFile.load(payload);
+      setTimeout(function () {
+        mirrorPrintRules();
+        document.body.classList.add("sh-view");
+        $("shName").textContent = fileCache.title || payload.name || "Estimate";
+        $("shDate").textContent = fileCache.savedAt
+          ? new Date(fileCache.savedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
+          : "";
+        gate.remove();
+      }, 500);
+    }).catch(function () {
+      // AES-GCM is authenticated: a wrong passphrase fails here rather than
+      // decrypting to something plausible-looking.
+      msg.textContent = "That passphrase does not open this estimate.";
+      msg.className = "sh-msg sh-err";
+    });
+  }
+  $("shGateGo").addEventListener("click", openIt);
+  $("shGatePass").addEventListener("keydown", function (e) { if (e.key === "Enter") openIt(); });
+  setTimeout(function () { $("shGatePass").focus(); }, 300);
+
+  window.aceShare = { encrypt: encryptPayload, decrypt: decryptPayload, mirror: mirrorPrintRules };
+})();
+
+/* <<< SHARE MODULE END >>> */
 </script>
 </body>
 </html>
