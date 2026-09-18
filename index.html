@@ -838,10 +838,15 @@
     .lines-head{display:grid;grid-template-columns:1fr 58px 108px 122px 118px;gap:10px;}
     .lines-head .act-col{display:none;}
     .line{page-break-inside:avoid;padding:10px 2px;}
+    /* No unit price on paper. Quantity x unit price does not equal the line
+       subtotal once size scaling and fixed setup are in play (42 LF at $625
+       reads as $26,250 next to a $24,993 line), so anyone checking the maths
+       finds a discrepancy that is not really there. Quantity and amount only. */
     .line-row{
-      grid-template-columns:1fr 58px 108px 122px 118px;
+      grid-template-columns:1fr 58px 108px 118px;
       gap:10px;
     }
+    .line-row .field.rate{display:none !important;}
     .line-row .remove{display:none;}
     .thumb{display:none !important;}
     .line select,.line input{
@@ -855,8 +860,19 @@
     .rate-reset{display:none !important;}
     .rate-cur,.rate-unit{color:#000;}
     .line-detail{margin-top:5px;max-width:100%;}
-    .ld-tier{display:none;}
-    .ld-desc{font-size:9pt;color:#444;line-height:1.4;}
+    /* Print what was CHOSEN, not the catalogue blurb.
+       .ld-desc describes the item across all four tiers ("Economy is TFL…,
+       tiers step up in…") — that is reference copy, not this estimate.
+       .ld-tier is the tier actually selected, so that is what prints.
+       .ld-band carries the internal sell band and midpoint and never does. */
+    .ld-desc{display:none !important;}
+    .ld-tier{display:block;font-size:9pt;color:#000;line-height:1.45;margin-top:3px;}
+    .ld-tier b{font-weight:600;}
+    .ld-band{display:none !important;}
+    /* A size selection prints as its value, not as a slider. */
+    .sc-range,.sc-ticks{display:none !important;}
+    .sc-read,.sc-mult{color:#000;font-size:9pt;}
+    .ld-scale .lc-label{color:#000;}
     .m-label{display:none;}
     .field{display:contents;}
     .print-only{display:block;}
