@@ -894,6 +894,7 @@
     .print-only{display:block;}
     .totals{border-top:1.5px solid #000;}
     .install-note,.total-row .value,.total-row .label{color:#000;}
+    #modRow{display:none !important;}
     .set{page-break-inside:avoid;border:1px solid #000;background:#fff;margin:12px 0;}
     .set-head,.set-foot{background:#fff;}
     .set-name{border:none;background:none;color:#000;padding:2px 0;font-size:12pt;}
@@ -1013,7 +1014,7 @@
 
   <div class="totals">
     <div class="totals-inner">
-      <div class="total-row">
+      <div class="total-row" id="modRow">
         <span class="label">Market Pricing</span>
         <span class="value" id="modDisplay">1.00×</span>
       </div>
@@ -3741,6 +3742,9 @@ recalcFI();
 
 
 
+
+
+
 /* <<< MARGIN MODULE BEGIN >>> */
 
 /* ============================================================
@@ -3977,9 +3981,12 @@ recalcFI();
   $("mgProj").value = st.proj;
   $("mgDate").value = st.date;
   $("mgPct").value = st.pct;
-  /* Open only if they had it open, or a fee is already set on this project —
-     otherwise the panel is a closed line nobody has to think about. */
-  setOpen(!!st.on || (parseFloat(st.pct) || 0) > 0);
+  /* Open only if it was deliberately left open. Re-opening because a stale
+     rate is still in storage is how a fee nobody asked for comes back: loading
+     a project file writes its saved rate into the field without opening the
+     panel, and the next reload would then open it and apply that rate. */
+  setOpen(!!st.on);
+  if (!st.on) { $("mgPct").value = 0; st.pct = 0; save(); }
 
   function save() {
     try { localStorage.setItem(MKEY, JSON.stringify(st)); } catch (e) {}
@@ -4299,9 +4306,12 @@ recalcFI();
     "  padding:9px 14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);}",
     ".pf-l{font-family:var(--mark);font-size:9px;letter-spacing:.18em;text-transform:uppercase;",
     "  color:var(--ink-faint);}",
-    ".pf-name{font-size:13px;color:var(--ink);font-weight:600;min-width:0;overflow:hidden;",
-    "  text-overflow:ellipsis;white-space:nowrap;max-width:46ch;}",
-    ".pf-name.pf-untitled{font-weight:400;color:var(--ink-faint);}",
+    ".pf-name{font-size:13px;color:var(--ink);font-weight:600;min-width:0;max-width:46ch;flex:1 1 220px;",
+    "  border:none;border-bottom:1px dashed transparent;background:transparent;font-family:inherit;",
+    "  padding:2px 0;}",
+    ".pf-name:hover{border-bottom-color:var(--line);}",
+    ".pf-name:focus{outline:none;border-bottom-color:var(--ink);}",
+    ".pf-name::placeholder{font-weight:400;color:var(--ink-faint);}",
     ".pf-sp{margin-left:auto;}",
     ".pf-btn{font-family:var(--mark);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;",
     "  padding:7px 12px;border:1px solid var(--line);border-radius:4px;background:#fff;",
@@ -4318,7 +4328,7 @@ recalcFI();
   bar.id = "pfBar";
   bar.innerHTML = [
     '<span class="pf-l">Project</span>',
-    '<span class="pf-name pf-untitled" id="pfName">Untitled</span>',
+    '<input class="pf-name" id="pfName" type="text" placeholder="Untitled" aria-label="Project name">',
     '<span class="pf-msg" id="pfMsg"></span>',
     '<span class="pf-sp"></span>',
     '<button class="pf-btn" id="pfOpen" type="button">Open project file</button>',
@@ -4347,14 +4357,20 @@ recalcFI();
     var el = $("mgProj");
     return (el && el.value.trim()) || "";
   }
+  /* The project name is a property of the project, not of the optional fee
+     panel it used to live inside — that panel is collapsed by default, which
+     made the name unreachable. It is edited here and mirrored into the fee
+     panel's field so the proposal and the shared file agree. */
   function paintName() {
-    var n = projectName();
     var el = $("pfName");
-    el.textContent = n || "Untitled";
-    el.classList.toggle("pf-untitled", !n);
+    if (document.activeElement !== el) el.value = projectName();
   }
   paintName();
   if ($("mgProj")) $("mgProj").addEventListener("input", paintName);
+  $("pfName").addEventListener("input", function () {
+    var mg = $("mgProj");
+    if (mg) { mg.value = $("pfName").value; mg.dispatchEvent(new Event("input", { bubbles: true })); }
+  });
 
   function slug(s) {
     return (s || "wolf-project").toLowerCase()
@@ -4493,6 +4509,7 @@ recalcFI();
 
 /* <<< PROJECTFILE MODULE END >>> */
 
+
 /* <<< SHARE MODULE BEGIN >>> */
 
 /* ============================================================
@@ -4615,6 +4632,11 @@ recalcFI();
     "body.sh-view .no-print,body.sh-view #mgPanel,body.sh-view #pfBar,",
     "body.sh-view .ace-projbar,body.sh-view #fiSection{display:none !important;}",
     "body.sh-view .sh-bar{display:flex;}",
+    /* Print rules assume a paper margin. On screen there is none, so the money
+       column ran into the right edge of the window. Give the sheet its margin
+       back — this is the document the client actually looks at. */
+    "body.sh-view .wrap{padding-left:34px !important;padding-right:34px !important;",
+    "  max-width:1040px;margin:0 auto;box-sizing:border-box;}",
     ".sh-bar{display:none;align-items:center;gap:14px;background:var(--ink);color:#fff;",
     "  padding:12px 22px;margin:0 0 20px;flex-wrap:wrap;}",
     ".sh-bar .sh-l{font-family:var(--mark);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#8d939a;}",
