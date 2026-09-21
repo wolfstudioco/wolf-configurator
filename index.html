@@ -878,6 +878,27 @@
     .ld-tier{display:block;font-size:9pt;color:#000;line-height:1.45;margin-top:3px;}
     .ld-tier b{font-weight:600;}
     .ld-band{display:none !important;}
+    /* client-print v2 */
+    /* Calibration notes ("sell prices reflect industry midpoints...", "get a
+       specialty fabricator quote before quoting the client") are written to
+       the estimator. They never reach the client. */
+    .ld-note,.ld-flag{display:none !important;}
+    /* A set prints as a titled group: "Guest Room (King)  x 9". The badge,
+       the input chrome and the internal per-unit/shop-setup line are how the
+       estimate is built, not what the client is buying. */
+    .set-badge,.set-unit-row{display:none !important;}
+    .set-qty-wrap span:last-child{display:none !important;}
+    .set-qty{border:none !important;background:none !important;box-shadow:none !important;
+      width:3.4em !important;padding:0 !important;-webkit-appearance:none;appearance:none;
+      -moz-appearance:textfield;font-size:11pt;color:#000;}
+    .set-qty::-webkit-inner-spin-button,.set-qty::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+    .set-single .set-qty-wrap{display:none !important;}
+    .set-print-math{display:block !important;font-size:9pt;color:#000;margin:0 0 4px;}
+    .set-print-math div{display:flex;justify-content:flex-end;gap:28px;}
+    .set-print-math div span:last-child{min-width:92px;text-align:right;}
+    .set-total-row{font-size:0 !important;}
+    .set-total-row::before{content:"Total";font-size:8pt;letter-spacing:.14em;text-transform:uppercase;margin-right:14px;}
+    .set-total-row .set-subtotal{font-size:12pt;}
     /* The line's own note prints as plain text; an empty one takes no room. */
     .ld-inc{
       border:none !important;background:none !important;
@@ -888,6 +909,7 @@
     /* A size selection prints as its value, not as a slider. */
     .sc-range,.sc-ticks{display:none !important;}
     .sc-read,.sc-mult{color:#000;font-size:9pt;}
+    .sc-mult{display:none !important;}   /* the size multiplier is internal */
     .ld-scale .lc-label{color:#000;}
     .m-label{display:none;}
     .field{display:contents;}
@@ -2772,12 +2794,15 @@ function recalcAll(){
 }
 
 /* ---------- Totals ---------- */
+/* client-print v2: print-only set arithmetic lives in .set-print-math */
+(function(){ var st=document.createElement("style");
+  st.textContent=".set-print-math{display:none;}"; document.head.appendChild(st); })();
 function recalcTotals(){
   let total = 0, baseTotal = 0;
 
   // Ungrouped lines (direct children of #lines)
   linesEl.querySelectorAll(":scope > .line").forEach(li=>{
-    total += parseFloat(li.dataset.subtotal) || 0;
+    total += Math.round(parseFloat(li.dataset.subtotal) || 0);   /* totals = sum of displayed */
     baseTotal += parseFloat(li.dataset.baseSubtotal) || 0;
   });
 
@@ -2806,7 +2831,30 @@ function recalcTotals(){
       fmt(scaling) + " per unit  ×  " + qty +
       (setupOnce > 0 ? ("   +  " + fmt(setupOnce) + " shop setup, once") : "");
     setEl.querySelector(".set-subtotal").textContent = fmt(setTotal);
-    total += setTotal;
+
+    /* What the client reads. Lines inside a set are per-unit amounts that each
+       carry their one-time setup, so "lines x qty" overstates the total by the
+       setup on units 2..n. Print that as its own line so the column adds up:
+         lines (as printed)  ->  each x qty  ->  less setup counted once  ->  total
+       Built from the printed (rounded) figures, so it reconciles to the dollar. */
+    let pm = setEl.querySelector(".set-print-math");
+    if(!pm){
+      pm = document.createElement("div"); pm.className = "set-print-math";
+      const tb = setEl.querySelector(".set-total-block");
+      tb.insertBefore(pm, tb.querySelector(".set-total-row"));
+    }
+    setEl.classList.toggle("set-single", qty <= 1);
+    if(qty > 1){
+      const num = t => +String(t || "").replace(/[^0-9.-]/g, "") || 0;
+      let each = 0;
+      setEl.querySelectorAll(".set-lines > .line .subtotal").forEach(el => { each += num(el.textContent); });
+      const T = num(fmt(setTotal)), G = each * qty, D = G - T;
+      pm.innerHTML = "<div><span>" + fmt(each) + " each &times; " + qty + "</span><span>" + fmt(G) + "</span></div>"
+        + (D > 0 ? "<div><span>One-time setup, counted once rather than " + qty + " times</span><span>&minus;" + fmt(D) + "</span></div>" : "");
+    } else {
+      pm.innerHTML = "";
+    }
+    total += Math.round(setTotal);
     baseTotal += scalingBase * qty + setupOnceBase;
   });
 
