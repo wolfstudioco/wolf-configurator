@@ -76,6 +76,8 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 .tk{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:#4a473e}
 .tv{font-size:26px;font-weight:700;color:#14181e}
 .delivered{text-align:right;font-size:12px;color:#8a8676;margin:4px 0 0;letter-spacing:.01em}
+.leadtime{font-size:12.5px;color:#5b5646;text-align:center;margin:16px 0 6px;padding-top:12px;border-top:1px solid #e2ddc8;letter-spacing:.01em}
+.leadtime b{color:#14181e;font-weight:700}
 .feerow{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid #e2ddc8}
 .feein{width:56px;padding:3px 6px;border:1px solid #cfc8b0;border-radius:4px;background:#fff;font:inherit;font-size:14px;text-align:right;margin:0 3px}
 .feerow .tk{font-weight:600}
@@ -115,6 +117,7 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 <div class="feerow"><span class="tk">Trade fee <input id="feePct" class="feein" type="number" min="0" step="0.5" value="0" title="Trade fee %">%</span><span class="tv2" id="feeAmt">$0</span></div>
 <div class="total grand" id="grandRow" style="display:none"><span class="tk">Total incl. trade fee</span><span class="tv" id="grand">$0</span></div>
 <div class="notes"><label for="notesin">Notes / special requests</label><textarea id="notesin"></textarea></div>
+<div class="leadtime"><b>Lead time:</b> 4-5 months from finalized selections.</div>
 <div class="actions">
  <button class="btn pri" onclick="printInternal()">Print / Save PDF</button>
  <button class="btn" onclick="printClient()">Print / Save: Client version</button>
