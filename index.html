@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wolf Configurator — Conceptual Estimate Console</title>
+<title>Wolf Configurator | Conceptual Estimate Console</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
@@ -1439,6 +1439,36 @@ const TIER_DEF_REST_SEAT = {
 };
 const TABLE_SHAPES = {tableRound:1, tableSquare:1, tableRect:1};
 
+/* no-dash v1 */
+function wcNoDashStr(t){
+  if(t.indexOf("—")<0) return t;
+  t = t.replace(/(^|; )([^;—:]{1,30}?) — /g, "$1$2: ");
+  return t.replace(/\s*—\s*$/,"").replace(/ — /g, ", ").replace(/—/g, "-");
+}
+var WC_DASH_SAVED = null;
+function wcNoDash(root, save){
+  if(!root) return;
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null), n, list=[];
+  while((n = w.nextNode())) list.push(n);
+  list.forEach(function(n){
+    var pe = n.parentElement; if(!pe) return;
+    var tg = pe.tagName; if(tg==="SCRIPT"||tg==="STYLE"||tg==="TEXTAREA") return;
+    var v = n.nodeValue; if(v.indexOf("—")<0) return;
+    if(tg==="OPTION" && !pe.hasAttribute("value")) pe.setAttribute("value", pe.textContent);
+    if(save && WC_DASH_SAVED) WC_DASH_SAVED.push([n, v]);
+    n.nodeValue = wcNoDashStr(v);
+  });
+}
+function wcNoDashWatch(root){
+  wcNoDash(root);
+  new MutationObserver(function(ms){ ms.forEach(function(m){
+    if(m.type==="characterData"){ if(m.target.nodeValue.indexOf("—")>=0) m.target.nodeValue = wcNoDashStr(m.target.nodeValue); }
+    else m.addedNodes.forEach(function(a){ if(a.nodeType===3){ if(a.nodeValue.indexOf("—")>=0) a.nodeValue=wcNoDashStr(a.nodeValue); } else wcNoDash(a); });
+  }); }).observe(root, {childList:true, subtree:true, characterData:true});
+}
+/* every print is client-facing: strip for the print, restore after */
+window.addEventListener("beforeprint", function(){ WC_DASH_SAVED = []; wcNoDash(document.body, true); });
+window.addEventListener("afterprint", function(){ (WC_DASH_SAVED||[]).forEach(function(p){ p[0].nodeValue = p[1]; }); WC_DASH_SAVED = null; });
 /* Doors — the tier steps by wood species; size is a separate multiplier. */
 const TIER_DEF_DOOR = {
   "Economy":"pine — the value-grade option for budget openings.",
@@ -4356,6 +4386,7 @@ recalcFI();
 
   $("mgProposal").addEventListener("click", function () {
     renderProposal();
+    wcNoDash($("cpPage"));
     document.body.classList.add("cp-mode");
     window.scrollTo(0, 0);
   });
@@ -4898,12 +4929,13 @@ recalcFI();
   var slugParam = null;
   try { slugParam = new URLSearchParams(location.search).get("e"); } catch (e) {}
   if (!slugParam) { window.aceShare = { encrypt: encryptPayload, decrypt: decryptPayload }; return; }
+  wcNoDashWatch(document.body);
 
   var gate = document.createElement("div");
   gate.className = "sh-gate";
   gate.innerHTML = [
     '<div class="sh-card">',
-    '  <h3 class="sh-h">Wolf Studio — estimate</h3>',
+    '  <h3 class="sh-h">Wolf Studio estimate</h3>',
     '  <p class="sh-p">This estimate is protected. Enter the passphrase you were given.</p>',
     '  <label class="sh-f"><span>Passphrase</span><input id="shGatePass" type="password" autocomplete="off"></label>',
     '  <div class="sh-row"><button class="sh-btn" id="shGateGo" type="button" ',
