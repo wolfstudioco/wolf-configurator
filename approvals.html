@@ -71,7 +71,9 @@
   .card.rev{border-color:var(--warn-line)} .card.ok{border-color:var(--ok-line)}
 
   .thumb{position:relative;aspect-ratio:4/3;background:var(--surface-2);display:flex;align-items:center;justify-content:center;overflow:hidden;border-bottom:1px solid var(--line)}
-  .thumb img{width:100%;height:100%;object-fit:contain;display:block;transform-origin:center center;transition:transform .1s ease-out}
+  .thumb .fill{position:absolute;inset:0;background-size:cover;background-position:center;filter:blur(24px) saturate(1.08);transform:scale(1.25);z-index:0;opacity:.92}
+  .thumb img{position:relative;z-index:1;width:100%;height:100%;object-fit:contain;display:block;transform-origin:center center;transition:transform .1s ease-out}
+  .thumb .ph,.thumb .busy,.thumb .replace,.thumb .zoomctl{z-index:2}
   .thumb .ph{display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--muted);text-align:center;padding:16px;cursor:pointer}
   .thumb .ph svg{opacity:.5}
   .thumb .ph span{font-size:11.5px;font-family:var(--font-mono);letter-spacing:.03em}
@@ -208,6 +210,7 @@
   function buildCard(p){
     var root=el("article","card");
     var thumb=el("div","thumb");
+    var fill=el("div","fill"); fill.hidden=true;
     var img=el("img"); img.alt=""; img.hidden=true; img.loading="lazy";
     var ph=el("div","ph");
     var busy=el("div","busy","Uploading…"); busy.hidden=true;
@@ -216,7 +219,7 @@
     var zminus=el("button",null,"−"); zminus.type="button"; zminus.title="Item smaller";
     var zplus=el("button",null,"+"); zplus.type="button"; zplus.title="Item larger";
     zoomctl.appendChild(zminus); zoomctl.appendChild(zplus);
-    thumb.appendChild(img); thumb.appendChild(ph); thumb.appendChild(busy); thumb.appendChild(replace); thumb.appendChild(zoomctl);
+    thumb.appendChild(fill); thumb.appendChild(img); thumb.appendChild(ph); thumb.appendChild(busy); thumb.appendChild(replace); thumb.appendChild(zoomctl);
 
     var body=el("div","body");
     var name=el("h3","pname",p.name||"Untitled piece");
@@ -254,7 +257,7 @@
     body.appendChild(name); body.appendChild(specWrap); body.appendChild(swWrap); body.appendChild(notesWrap); body.appendChild(statusrow);
     root.appendChild(thumb); root.appendChild(body);
 
-    return {root:root,img:img,ph:ph,busy:busy,replace:replace,zoomctl:zoomctl,name:name,specEdit:specEdit,notesEdit:notesEdit,swLbl:swLbl,swRow:swRow,seg:seg,btns:btns,lastImg:undefined,lastSw:undefined};
+    return {root:root,fill:fill,img:img,ph:ph,busy:busy,replace:replace,zoomctl:zoomctl,name:name,specEdit:specEdit,notesEdit:notesEdit,swLbl:swLbl,swRow:swRow,seg:seg,btns:btns,lastImg:undefined,lastSw:undefined};
   }
 
   function renderSwatches(refs,p){
@@ -290,8 +293,8 @@
     refs.root.classList.toggle("ok",st==="approved"); refs.root.classList.toggle("rev",st==="revise");
     var url=p.image_url||null;
     if(url!==refs.lastImg){ refs.lastImg=url;
-      if(url){ refs.img.src=url; refs.img.hidden=false; refs.ph.hidden=true; }
-      else { refs.img.hidden=true; refs.img.removeAttribute("src"); refs.ph.hidden=false; } }
+      if(url){ refs.img.src=url; refs.img.hidden=false; refs.ph.hidden=true; refs.fill.style.backgroundImage="url('"+url+"')"; refs.fill.hidden=false; }
+      else { refs.img.hidden=true; refs.img.removeAttribute("src"); refs.ph.hidden=false; refs.fill.style.backgroundImage=""; refs.fill.hidden=true; } }
     refs.ph.innerHTML=""; if(!url){ refs.ph.innerHTML=ICONS.photo; refs.ph.appendChild(el("span",null,"Add rendering")); }
     refs.replace.hidden=!url;
     var z=(typeof p.image_zoom==="number"&&p.image_zoom>0)?p.image_zoom:1;
