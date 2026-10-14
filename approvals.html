@@ -178,7 +178,7 @@
 
   // ---- data layer (Supabase REST + Storage) ----
   function loadPieces(){
-    return fetch(REST+"?select=*&order=ord.asc",{headers:H}).then(function(r){ return r.ok?r.json():[]; }).catch(function(){ return null; });
+    return fetch(REST+"?select=*&order=ord.asc",{headers:H}).then(function(r){ return r.ok?r.json():[]; }).then(function(rows){ return Array.isArray(rows)?rows.filter(function(p){return p.status!=="removed";}):rows; }).catch(function(){ return null; });
   }
   function patch(id,body){
     return fetch(REST+"?id=eq."+encodeURIComponent(id),{method:"PATCH",headers:Object.assign({"Prefer":"return=minimal"},HJSON),body:JSON.stringify(body)})
