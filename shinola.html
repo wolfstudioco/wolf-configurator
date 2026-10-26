@@ -176,6 +176,8 @@ const SECS=[{k:'rooms',n:'Shinola Rooms',s:'subRooms',t:it=>!it.pub&&!it.sm},{k:
 SECS.forEach(sec=>{
 const idxs=[]; ITEMS.forEach((it,i)=>{if(sec.t(it))idxs.push(i);});
 if(!idxs.length)return;
+const dim=i=>(removed[i]||(!ITEMS[i].tm&&qty[i]===0))?1:0;
+idxs.sort((a,b)=>dim(a)-dim(b));
 const wrap=document.createElement('div'); wrap.className='sec';
 const hdr=document.createElement('div'); hdr.className='sec-hdr'+(openSec[sec.k]?' open':'');
 hdr.innerHTML='<span class="sec-chev">▸</span><span class="sec-name">'+sec.n+'</span><span class="sec-count">'+idxs.length+' items</span><span class="sec-sub" id="'+sec.s+'"></span>';
