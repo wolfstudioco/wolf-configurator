@@ -100,6 +100,16 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 @media print{.actions{display:none} .undo{display:none} .xbtn{display:none} .additem{display:none} .item.removed{display:none} body{padding-bottom:24px} .opt:not(.sel){display:none} .howto{display:none}}
 .subtot{display:flex;justify-content:flex-end;align-items:baseline;gap:12px;margin-top:6px}
 .section-hdr{font-size:13px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:#9b3925;margin:22px 2px 10px;padding-top:12px;border-top:2px solid #14181e}
+.sec{margin-bottom:12px;border:1px solid #e2ddc8;border-radius:8px;overflow:hidden;background:#fff}
+.sec-hdr{display:flex;align-items:center;gap:11px;cursor:pointer;padding:14px 16px;background:#14181e;color:#f3ede0;user-select:none}
+.sec-hdr:hover{background:#1d232b}
+.sec-chev{display:inline-block;transition:transform .15s ease;font-size:12px;color:#c9a24a}
+.sec-hdr.open .sec-chev{transform:rotate(90deg)}
+.sec-name{font-size:14px;letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+.sec-count{font-size:11px;color:#9aa3ad}
+.sec-sub{margin-left:auto;font-weight:700;font-size:15px;color:#fff;font-variant-numeric:tabular-nums}
+.sec-body{padding:14px 14px 1px}
+@media(max-width:560px){.sec-count{display:none}}
 </style></head><body><div class="wrap">
 <h1>WOLF | SHINOLA - Furniture Refresh</h1>
 <p class="sub">Build your quote - Tiered options</p>
@@ -143,13 +153,10 @@ function PM(){return document.body.classList.contains('clientmode')?(1+CLIENTPCT
 function lowerBound(i){return 0;}
 const fmtq=n=>Number.isInteger(n)?n:n.toFixed(1);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-function render(){
-const L=document.getElementById('list'); L.innerHTML=''; let pubHdrDone=false; let smHdrDone=false;
-ITEMS.forEach((it,i)=>{
-if(it.pub&&!it.sm&&!pubHdrDone){const hd=document.createElement('div');hd.className='section-hdr';hd.textContent='Public Spaces';L.appendChild(hd);pubHdrDone=true;}
-if(it.sm&&!smHdrDone){const hs=document.createElement('div');hs.className='section-hdr';hs.textContent='San Morello';L.appendChild(hs);smHdrDone=true;}
+const openSec={rooms:false,public:false,sm:false};
+function buildCard(it,i){
 const d=document.createElement('div'); d.className='item'+(removed[i]?' removed':'')+(!removed[i]&&!it.tm&&qty[i]===0?' zero':'');
-if(it.tm){ d.innerHTML=`<button class="xbtn" data-rm="${i}" title="${removed[i]?'Add back to quote':'Remove item'}">${removed[i]?'+':'×'}</button><div class="ihead"><div><span class="iname">${it.label}</span></div><div class="ipick" id="pick${i}"></div></div><div class="tmline">${it.tmNote||'Billed time & materials'}</div>`; L.appendChild(d); return; }
+if(it.tm){ d.innerHTML=`<button class="xbtn" data-rm="${i}" title="${removed[i]?'Add back to quote':'Remove item'}">${removed[i]?'+':'×'}</button><div class="ihead"><div><span class="iname">${it.label}</span></div><div class="ipick" id="pick${i}"></div></div><div class="tmline">${it.tmNote||'Billed time & materials'}</div>`; return d; }
 let opts=''; const ul=(it.unit==='LF')?'/LF':(it.unit==='SF')?'/SF':'ea';
 it.opts.forEach((o,j)=>{
 const cl=(!o.avail?'opt na':(j===sel[i]?'opt sel':'opt'));
@@ -162,7 +169,22 @@ const lb=lowerBound(i); const stp=(it.unit==='LF')?'0.5':'1';
 const hint=(it.unit==='LF')?'<span class="qhint">per LF</span>':(it.unit==='SF')?'<span class="qhint">per SF</span>':'';
 const xb=`<button class="xbtn" data-rm="${i}" title="${removed[i]?'Add back to quote':'Remove item'}">${removed[i]?'+':'×'}</button>`;
 d.innerHTML=`${xb}<div class="ihead"><div><span class="iname">${it.label}</span>${it.com?' <span class="com">COM</span>':''}${it.yd?' <span class="yd">'+it.yd+' yd/ea · '+(qty[i]*it.yd).toFixed(1).replace(/\.0$/,'')+' yd total</span>':''}<span class="iqty">qty <input class="qtyin" type="number" step="${stp}" data-i="${i}" min="${lb}" value="${fmtq(qty[i])}" title="Edit quantity">${it.prevQty!=null?' <s class="qprev">prev '+fmtq(it.prevQty)+'</s>':''}${hint}</span></div><div class="ipick" id="pick${i}"></div></div><div class="opts">${opts}</div>`;
-L.appendChild(d);
+return d;
+}
+function render(){
+const L=document.getElementById('list'); L.innerHTML='';
+const SECS=[{k:'rooms',n:'Shinola Rooms',s:'subRooms',t:it=>!it.pub&&!it.sm},{k:'public',n:'Public Spaces',s:'subPublic',t:it=>it.pub&&!it.sm},{k:'sm',n:'San Morello',s:'subSM',t:it=>!!it.sm}];
+SECS.forEach(sec=>{
+const idxs=[]; ITEMS.forEach((it,i)=>{if(sec.t(it))idxs.push(i);});
+if(!idxs.length)return;
+const wrap=document.createElement('div'); wrap.className='sec';
+const hdr=document.createElement('div'); hdr.className='sec-hdr'+(openSec[sec.k]?' open':'');
+hdr.innerHTML='<span class="sec-chev">▸</span><span class="sec-name">'+sec.n+'</span><span class="sec-count">'+idxs.length+' items</span><span class="sec-sub" id="'+sec.s+'"></span>';
+hdr.addEventListener('click',()=>{openSec[sec.k]=!openSec[sec.k];render();});
+wrap.appendChild(hdr);
+const body=document.createElement('div'); body.className='sec-body'; if(!openSec[sec.k])body.style.display='none';
+idxs.forEach(i=>body.appendChild(buildCard(ITEMS[i],i)));
+wrap.appendChild(body); L.appendChild(wrap);
 });
 L.querySelectorAll('.opt').forEach(el=>{
 el.addEventListener('click',()=>{
@@ -243,6 +265,9 @@ const total=goods+goodsPub+goodsSM;
 const g=document.getElementById('goods'); if(g)g.textContent=money(goods);
 const gp=document.getElementById('goodsPub'); if(gp)gp.textContent=money(goodsPub);
 const gsm=document.getElementById('goodsSM'); if(gsm)gsm.textContent=money(goodsSM);
+const sr=document.getElementById('subRooms'); if(sr)sr.textContent=money(goods);
+const sp=document.getElementById('subPublic'); if(sp)sp.textContent=money(goodsPub);
+const ssm=document.getElementById('subSM'); if(ssm)ssm.textContent=money(goodsSM);
 const ga=document.getElementById('goodsAll'); if(ga)ga.textContent=money(total);
 const fpEl=document.getElementById('feePct'); let pct=fpEl?parseFloat(fpEl.value):0; if(isNaN(pct)||pct<0)pct=0;
 const fee=total*pct/100; const fa=document.getElementById('feeAmt'); if(fa)fa.textContent=money(fee);
