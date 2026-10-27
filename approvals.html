@@ -119,6 +119,11 @@
   .zoomctl{position:absolute;left:8px;bottom:8px;display:flex;gap:3px;align-items:center;background:color-mix(in srgb,var(--surface) 88%,transparent);border:1px solid var(--line);border-radius:9px;padding:3px;backdrop-filter:blur(4px)}
   .zoomctl button{appearance:none;border:0;background:transparent;color:var(--ink);font-family:var(--font-mono);font-size:15px;width:24px;height:24px;border-radius:6px;cursor:pointer;line-height:1}
   .zoomctl button:hover{background:var(--surface-2)}
+  .thumb img{cursor:zoom-in} .sw img{cursor:zoom-in}
+  .lb{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:var(--scrim);padding:clamp(16px,4vw,56px);cursor:zoom-out;-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+  .lb img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;border-radius:8px;box-shadow:0 14px 60px rgba(0,0,0,.55);background:#fff;cursor:default}
+  .lb .lbclose{position:absolute;top:16px;right:18px;width:42px;height:42px;border-radius:99px;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:24px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+  .lb .lbcap{position:absolute;left:0;right:0;bottom:16px;text-align:center;color:#fff;font-family:var(--font-mono);font-size:12px;letter-spacing:.03em;text-shadow:0 1px 4px rgba(0,0,0,.6);padding:0 16px;pointer-events:none}
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
   @media (max-width:520px){ .wrap{padding-left:16px;padding-right:16px} header.site{padding-left:16px;padding-right:16px} .meter{flex:1 1 100%} }
 </style>
@@ -153,6 +158,8 @@
   </div>
 </div>
 
+<div id="lightbox" class="lb" hidden><button class="lbclose" type="button" aria-label="Close">&times;</button><img alt=""><div class="lbcap" id="lbcap"></div></div>
+
 <input type="file" id="filepick" accept="image/png,image/jpeg,image/webp,image/avif" hidden>
 
 <script>
@@ -171,6 +178,16 @@
   var SECTIONS=["Guestrooms","Public Spaces"];
   var cards=new Map(), grids={}, pieces=[], uploadTarget=null;
   var filepick=document.getElementById("filepick");
+
+  // ---- lightbox (click any photo to enlarge) ----
+  var LB=document.getElementById("lightbox"), LBimg=LB?LB.querySelector("img"):null, LBcap=document.getElementById("lbcap");
+  function openLB(src,cap){ if(!LB||!src) return; LBimg.src=src; if(LBcap)LBcap.textContent=cap||""; LB.hidden=false; document.body.style.overflow="hidden"; }
+  function closeLB(){ if(!LB) return; LB.hidden=true; LBimg.removeAttribute("src"); if(LBcap)LBcap.textContent=""; document.body.style.overflow=""; }
+  if(LB){
+    LB.addEventListener("click",function(e){ if(e.target!==LBimg) closeLB(); });
+    LB.querySelector(".lbclose").addEventListener("click",function(e){ e.stopPropagation(); closeLB(); });
+    document.addEventListener("keydown",function(e){ if(e.key==="Escape"&&!LB.hidden) closeLB(); });
+  }
 
   function el(t,c,x){var e=document.createElement(t); if(c)e.className=c; if(x!=null)e.textContent=x; return e;}
   function byId(id){ for(var i=0;i<pieces.length;i++) if(pieces[i].id===id) return pieces[i]; return null; }
@@ -249,6 +266,7 @@
     statusrow.appendChild(seg);
 
     ph.addEventListener("click",function(){ uploadTarget={id:p.id,mode:"render"}; filepick.click(); });
+    img.addEventListener("click",function(){ var s=img.getAttribute("src"); if(s) openLB(s, (byId(p.id)||p).name||""); });
     zminus.addEventListener("click",function(e){ e.stopPropagation(); setZoom(p.id, curZoom(p.id)/1.2); });
     zplus.addEventListener("click",function(e){ e.stopPropagation(); setZoom(p.id, curZoom(p.id)*1.2); });
     replace.addEventListener("click",function(e){ e.stopPropagation(); uploadTarget={id:p.id,mode:"render"}; filepick.click(); });
@@ -271,6 +289,7 @@
     arr.forEach(function(sw,idx){
       var tile=el("div","sw");
       var im=el("img"); im.alt=""; im.src=sw.url; im.loading="lazy"; tile.appendChild(im);
+      im.addEventListener("click",function(){ openLB(sw.url, (sw.label||((byId(p.id)||p).name||""))); });
       var cap=document.createElement("input"); cap.type="text"; cap.className="cap"; cap.value=sw.label||""; cap.placeholder="name…"; cap.setAttribute("spellcheck","false");
       cap.addEventListener("blur",function(){ setSwatchLabel(p.id,idx,cap.value); });
       cap.addEventListener("keydown",function(e){ if(e.key==="Enter") cap.blur(); });
