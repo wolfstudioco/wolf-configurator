@@ -37,6 +37,16 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 .barnote{font-size:12.5px;color:#4a473e;font-style:italic;margin:-4px 4px 14px}
 .iflag{font-size:12px;font-weight:700;letter-spacing:.02em;color:#9b3925;background:#f3e3c0;border-left:3px solid #9b3925;border-radius:3px;padding:7px 11px;margin:0 4px 12px;line-height:1.45}
 .item.custom{border-left:3px solid #9b3925}
+.irow{display:flex;gap:14px;align-items:flex-start}
+.icontent{flex:1;min-width:0}
+.ithumb{width:92px;height:92px;flex:none;object-fit:cover;border-radius:6px;border:1px solid #e2ddc8;background:#fff;cursor:zoom-in;margin-top:1px}
+.item.zero .ithumb,.item.removed .ithumb{filter:grayscale(.6);opacity:.55}
+@media(max-width:520px){.ithumb{width:64px;height:64px}}
+.qlb{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:rgba(20,24,30,.87);padding:clamp(16px,4vw,56px);cursor:zoom-out}
+.qlb[hidden]{display:none!important}
+.qlb img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;border-radius:8px;box-shadow:0 14px 60px rgba(0,0,0,.5);background:#fff;cursor:default}
+.qlb .qlbx{position:absolute;top:16px;right:18px;width:42px;height:42px;border-radius:99px;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:24px;line-height:1;cursor:pointer}
+.qlb .qlbcap{position:absolute;left:0;right:0;bottom:18px;text-align:center;color:#fff;font-size:13px;letter-spacing:.02em;text-shadow:0 1px 4px rgba(0,0,0,.6);padding:0 16px;pointer-events:none}
 .citag{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#9b3925;margin-left:8px}
 .cbudget{color:#8a8676;font-size:12.5px;margin-left:8px}
 .cin{width:64px;font:inherit;font-size:12.5px;font-weight:700;color:#14181e;background:transparent;border:none;border-bottom:1px dashed #b9b09a;padding:0 1px;text-align:left}
@@ -115,6 +125,7 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 <p class="sub">Build your quote - Tiered options</p>
 <div class="howto"><b>How this works:</b> Each line shows four levels - tap the one you'd like. We've pre-selected a starting pick for each. Print or save a PDF to send back your selections. Prices are conceptual (±10-15%).</div>
 <div id="list"></div>
+<div id="qlb" class="qlb" hidden><button class="qlbx" type="button" aria-label="Close">&times;</button><img alt=""><div class="qlbcap"></div></div>
 <div id="customList"></div>
 <div class="additem">
 <div class="ai-title">Add your own item</div>
@@ -154,6 +165,7 @@ function lowerBound(i){return 0;}
 const fmtq=n=>Number.isInteger(n)?n:n.toFixed(1);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const openSec={rooms:false,public:false,sm:false};
+const QIMG={"Desk":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1791814254993-6kyhk3r.png","Desk chair":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1791816223416-95pek0w.jpg","Room Divider Screens":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1791813267027-z8vdo7f.png","Glass top - nightstands":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1791813872442-qgu0r5d.png","30×20″ Coffee Bar Tray":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1791814281602-5ezg3ol.png","C-Table Desk (18×24×28″)":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1791815446225-27mm6c4.png","Replace doors - coffee bars":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1791816839495-tj3wn3l.png","Coffee tables (guestrooms, replace ottomans)":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1791815500806-wr2dk0b.png","End / side tables - replace":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1791815594269-7uyrc4y.png","Dining chairs (with arms)":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1791817046243-nfmqtgt.jpg","Bedside lamps - adjustable":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1791817473495-6kg9fyz.jpg","Pillows (decorative, guestrooms)":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1791818057724-loiucde.jpg","Bed pillows":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1791818303415-qnfgcdt.jpg","Entry credenza - 72×25×42":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1793109734115-credenza-optB-v4.jpg","Lounge chairs (public + hallway)":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1791981131822-5l95vus.jpeg","Sofas - all (incl. hallway)":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1792072207257-ky5pd91.jpeg","Sofas - 3″ legs, reduced arm width (incl. hallway)":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1792432246224-qqjqsgw.jpeg"};
 function buildCard(it,i){
 const d=document.createElement('div'); d.className='item'+(removed[i]?' removed':'')+(!removed[i]&&!it.tm&&qty[i]===0?' zero':'');
 if(it.tm){ d.innerHTML=`<button class="xbtn" data-rm="${i}" title="${removed[i]?'Add back to quote':'Remove item'}">${removed[i]?'+':'×'}</button><div class="ihead"><div><span class="iname">${it.label}</span></div><div class="ipick" id="pick${i}"></div></div><div class="tmline">${it.tmNote||'Billed time & materials'}</div>`; return d; }
@@ -168,7 +180,8 @@ opts+=`<div class="${cl}" data-i="${i}" data-j="${j}"><div class="otier">${o.tie
 const lb=lowerBound(i); const stp=(it.unit==='LF')?'0.5':'1';
 const hint=(it.unit==='LF')?'<span class="qhint">per LF</span>':(it.unit==='SF')?'<span class="qhint">per SF</span>':'';
 const xb=`<button class="xbtn" data-rm="${i}" title="${removed[i]?'Add back to quote':'Remove item'}">${removed[i]?'+':'×'}</button>`;
-d.innerHTML=`${xb}<div class="ihead"><div><span class="iname">${it.label}</span>${it.com?' <span class="com">COM</span>':''}${it.yd?' <span class="yd">'+it.yd+' yd/ea · '+(qty[i]*it.yd).toFixed(1).replace(/\.0$/,'')+' yd total</span>':''}<span class="iqty">qty <input class="qtyin" type="number" step="${stp}" data-i="${i}" min="${lb}" value="${fmtq(qty[i])}" title="Edit quantity">${it.prevQty!=null?' <s class="qprev">prev '+fmtq(it.prevQty)+'</s>':''}${hint}</span></div><div class="ipick" id="pick${i}"></div></div>${it.flag?'<div class="iflag">'+it.flag+'</div>':''}<div class="opts">${opts}</div>`;
+const timg=QIMG[it.label]?'<img class="ithumb" src="'+QIMG[it.label]+'" alt="" loading="lazy">':'';
+d.innerHTML=`${xb}<div class="irow">${timg}<div class="icontent"><div class="ihead"><div><span class="iname">${it.label}</span>${it.com?' <span class="com">COM</span>':''}${it.yd?' <span class="yd">'+it.yd+' yd/ea · '+(qty[i]*it.yd).toFixed(1).replace(/\.0$/,'')+' yd total</span>':''}<span class="iqty">qty <input class="qtyin" type="number" step="${stp}" data-i="${i}" min="${lb}" value="${fmtq(qty[i])}" title="Edit quantity">${it.prevQty!=null?' <s class="qprev">prev '+fmtq(it.prevQty)+'</s>':''}${hint}</span></div><div class="ipick" id="pick${i}"></div></div>${it.flag?'<div class="iflag">'+it.flag+'</div>':''}<div class="opts">${opts}</div></div></div>`;
 return d;
 }
 function render(){
@@ -279,5 +292,18 @@ if(gr)gr.textContent=money(total+fee); if(grRow)grRow.style.display=pct>0?'flex'
 render();
 updateUndoBtn();
 (function(){const fp=document.getElementById('feePct'); if(fp)fp.addEventListener('input',update);})();
+(function(){
+  var QL=document.getElementById('qlb'); if(!QL) return;
+  var QI=QL.querySelector('img'), QC=QL.querySelector('.qlbcap');
+  function open(src,cap){ QI.src=src; QC.textContent=cap||''; QL.hidden=false; document.body.style.overflow='hidden'; }
+  function close(){ QL.hidden=true; QI.removeAttribute('src'); QC.textContent=''; document.body.style.overflow=''; }
+  document.addEventListener('click',function(e){
+    var t=e.target.closest&&e.target.closest('.ithumb');
+    if(t){ var card=t.closest('.item'); var nm=card?card.querySelector('.iname'):null; open(t.getAttribute('src'), nm?nm.textContent:''); }
+  });
+  QL.addEventListener('click',function(e){ if(e.target!==QI) close(); });
+  QL.querySelector('.qlbx').addEventListener('click',function(e){ e.stopPropagation(); close(); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&!QL.hidden) close(); });
+})();
 </script>
 </body></html>
