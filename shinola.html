@@ -40,6 +40,8 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 .irow{display:flex;gap:14px;align-items:flex-start}
 .icontent{flex:1;min-width:0}
 .ithumb{width:92px;height:92px;flex:none;object-fit:cover;border-radius:6px;border:1px solid #e2ddc8;background:#fff;cursor:zoom-in;margin-top:1px}
+.ithumbs{display:flex;flex-direction:column;gap:6px;flex:none}
+.ithumb.sm{height:62px}
 .item.zero .ithumb,.item.removed .ithumb{filter:grayscale(.6);opacity:.55}
 @media(max-width:520px){.ithumb{width:64px;height:64px}}
 .qlb{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:rgba(20,24,30,.87);padding:clamp(16px,4vw,56px);cursor:zoom-out}
@@ -180,7 +182,10 @@ opts+=`<div class="${cl}" data-i="${i}" data-j="${j}"><div class="otier">${o.tie
 const lb=lowerBound(i); const stp=(it.unit==='LF')?'0.5':'1';
 const hint=(it.unit==='LF')?'<span class="qhint">per LF</span>':(it.unit==='SF')?'<span class="qhint">per SF</span>':'';
 const xb=`<button class="xbtn" data-rm="${i}" title="${removed[i]?'Add back to quote':'Remove item'}">${removed[i]?'+':'×'}</button>`;
-const timg=QIMG[it.label]?'<img class="ithumb" src="'+QIMG[it.label]+'" alt="" loading="lazy">':'';
+const QX={"Entry credenza - 72×25×42":["https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1793358816198-shinola-entry-console-room-render-v1.jpg","https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1793358817050-shinola-entry-console-lid-umbrella-closeup-v1.jpg"]};
+const tx=(QX[it.label]||[]).map(u=>'<img class="ithumb sm" src="'+u+'" alt="" loading="lazy">').join('');
+const timg0=QIMG[it.label]?'<img class="ithumb" src="'+QIMG[it.label]+'" alt="" loading="lazy">':'';
+const timg=tx?'<div class="ithumbs">'+timg0+tx+'</div>':timg0;
 d.innerHTML=`${xb}<div class="irow">${timg}<div class="icontent"><div class="ihead"><div><span class="iname">${it.label}</span>${it.com?' <span class="com">COM</span>':''}${it.yd?' <span class="yd">'+it.yd+' yd/ea · '+(qty[i]*it.yd).toFixed(1).replace(/\.0$/,'')+' yd total</span>':''}<span class="iqty">qty <input class="qtyin" type="number" step="${stp}" data-i="${i}" min="${lb}" value="${fmtq(qty[i])}" title="Edit quantity">${it.prevQty!=null?' <s class="qprev">prev '+fmtq(it.prevQty)+'</s>':''}${hint}</span></div><div class="ipick" id="pick${i}"></div></div>${it.flag?'<div class="iflag">'+it.flag+'</div>':''}<div class="opts">${opts}</div></div></div>`;
 return d;
 }

@@ -129,6 +129,11 @@
   .lb .lbcap{position:absolute;left:0;right:0;bottom:16px;text-align:center;color:#fff;font-family:var(--font-mono);font-size:12px;letter-spacing:.03em;text-shadow:0 1px 4px rgba(0,0,0,.6);padding:0 16px;pointer-events:none}
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
   @media (max-width:520px){ .wrap{padding-left:16px;padding-right:16px} header.site{padding-left:16px;padding-right:16px} .meter{flex:1 1 100%} }
+.gal{display:flex;gap:8px;padding:10px 14px 0;flex-wrap:wrap}
+.gal:empty{display:none}
+.gal figure{margin:0;width:calc(50% - 4px);cursor:zoom-in}
+.gal img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;display:block;background:#eee}
+.gal figcaption{font-size:11px;letter-spacing:.04em;opacity:.65;margin-top:4px}
 </style>
 </head>
 <body>
@@ -242,6 +247,7 @@
     zoomctl.appendChild(zminus); zoomctl.appendChild(zplus);
     thumb.appendChild(fill); thumb.appendChild(img); thumb.appendChild(ph); thumb.appendChild(busy); thumb.appendChild(replace); thumb.appendChild(zoomctl);
 
+    var gal=el("div","gal");
     var body=el("div","body");
     var name=el("h3","pname",p.name||"Untitled piece");
 
@@ -277,9 +283,9 @@
     notesEdit.addEventListener("blur",function(){ commitField(p.id,"notes",notesEdit.value); });
 
     body.appendChild(name); body.appendChild(specWrap); body.appendChild(swWrap); body.appendChild(notesWrap); body.appendChild(statusrow);
-    root.appendChild(thumb); root.appendChild(body);
+    root.appendChild(thumb); root.appendChild(gal); root.appendChild(body);
 
-    return {root:root,fill:fill,img:img,ph:ph,busy:busy,replace:replace,zoomctl:zoomctl,name:name,specEdit:specEdit,notesEdit:notesEdit,swLbl:swLbl,swRow:swRow,seg:seg,btns:btns,lastImg:undefined,lastSw:undefined};
+    return {root:root,gal:gal,lastGal:undefined,fill:fill,img:img,ph:ph,busy:busy,replace:replace,zoomctl:zoomctl,name:name,specEdit:specEdit,notesEdit:notesEdit,swLbl:swLbl,swRow:swRow,seg:seg,btns:btns,lastImg:undefined,lastSw:undefined};
   }
 
   function renderSwatches(refs,p){
@@ -324,6 +330,16 @@
     refs.img.style.transform="scale("+z+")";
     refs.zoomctl.hidden=!url;
     renderSwatches(refs,p);
+    renderGallery(refs,p);
+  }
+  function renderGallery(refs,p){
+    var arr=Array.isArray(p.gallery)?p.gallery:[]; var sig=JSON.stringify(arr);
+    if(sig===refs.lastGal) return; refs.lastGal=sig; refs.gal.innerHTML="";
+    arr.forEach(function(g){ if(!g||!g.url) return;
+      var fig=document.createElement("figure"); var im=el("img"); im.alt=g.label||""; im.src=g.url; im.loading="lazy";
+      fig.appendChild(im); if(g.label) fig.appendChild(el("figcaption",null,g.label));
+      fig.addEventListener("click",function(){ openLB(g.url, ((byId(p.id)||p).name||"")+(g.label?" - "+g.label:"")); });
+      refs.gal.appendChild(fig); });
   }
 
   function render(){
