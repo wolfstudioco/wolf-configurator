@@ -123,30 +123,23 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 .sec-body{padding-top:0}
 @media(max-width:560px){.sec-count{display:none}}
 
-.chgbar{background:#14181e;color:#faf7ea;border-radius:7px;padding:13px 16px;margin:2px 0 18px}
-.chgtop{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
-.chglbl{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:#e6b39e}
-.chgn{font-size:10.5px;font-weight:700;color:#14181e;background:#e6b39e;border-radius:99px;padding:1px 8px;min-width:18px;text-align:center}
-.chgsaved{font-size:11px;color:#9a917f}
-.chgx{margin-left:auto;background:transparent;border:1px solid #4a4f57;color:#cbc6b4;border-radius:5px;padding:5px 11px;font:inherit;font-size:11.5px;font-weight:700;cursor:pointer;letter-spacing:.02em}
-.chgx:hover{border-color:#e6b39e;color:#fff}
-.chgchips{display:flex;flex-wrap:wrap;gap:7px}
-.chgchip{background:rgba(255,255,255,.055);border:1px solid #363b43;border-radius:5px;padding:5px 10px;font-size:12px;color:#ded9c7;line-height:1.35}
-.chgchip b{color:#fff;font-weight:700}
-.chgchip s{color:#8f897a;font-weight:400}
-.chgchip .ar{color:#e6b39e;font-weight:700;margin:0 3px}
-.item.changed{border-color:#c98a5e;box-shadow:inset 3px 0 0 #9b3925;background:#fbf6ea}
-.chgpill{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#fff;background:#9b3925;border-radius:3px;padding:2px 6px;margin-left:8px;vertical-align:middle}
-.chgdtl{display:inline-block;font-size:11.5px;color:#9b3925;font-weight:700;margin-left:7px;vertical-align:middle}
-.chgdtl s{color:#b4ab97;font-weight:400}
-.clientmode .chgbar,.clientmode .chgpill,.clientmode .chgdtl{display:none!important}
-.clientmode .item.changed{box-shadow:none;background:#f7f5e6;border-color:#e2ddc8}
-@media print{.chgx{display:none}.clientmode .chgbar{display:none!important}}
+.chgnote{color:#a79e8a;font-size:12px;font-weight:400;margin-left:8px;vertical-align:middle}
+.chgnote s{color:#c3bba3}
+.chgtally{margin-top:18px;padding-top:13px;border-top:1px solid #e2ddc8}
+.chgtally .ct-h{font-size:11px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;color:#a79e8a;margin-bottom:7px}
+.chgtally ul{margin:0;padding:0;list-style:none;font-size:12.5px}
+.chgtally li{padding:2px 0;color:#6b6453}
+.chgtally li b{color:#4a473e;font-weight:600}
+.chgtally s{color:#c3bba3}
+.chgtally .ar{color:#9a8f78;margin:0 3px}
+.chgtally .ct-reset{margin-top:10px;background:transparent;border:1px solid #d7d0bc;color:#8a8676;border-radius:5px;padding:4px 11px;font:inherit;font-size:11.5px;font-weight:600;cursor:pointer;letter-spacing:.02em}
+.chgtally .ct-reset:hover{border-color:#9b3925;color:#9b3925}
+.clientmode .chgnote,.clientmode .chgtally{display:none!important}
+@media print{.chgtally .ct-reset{display:none}.clientmode .chgtally{display:none!important}}
 </style></head><body><div class="wrap">
 <h1>WOLF | SHINOLA - Furniture Refresh</h1>
 <p class="sub">Build your quote - Tiered options</p>
 <div class="howto"><b>How this works:</b> Each line shows four levels - tap the one you'd like. We've pre-selected a starting pick for each. Print or save a PDF to send back your selections. Prices are conceptual (±10-15%).</div>
-<div id="chgbar" class="chgbar" hidden></div>
 <div id="list"></div>
 <div id="qlb" class="qlb" hidden><button class="qlbx" type="button" aria-label="Close">&times;</button><img alt=""><div class="qlbcap"></div></div>
 <div id="customList"></div>
@@ -166,6 +159,7 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 <div class="delivered">+ Delivery avg +15%<br>+ Install avg +16%</div>
 <div class="feerow"><span class="tk">Trade fee <input id="feePct" class="feein" type="number" min="0" step="0.5" value="0" title="Trade fee %">%</span><span class="tv2" id="feeAmt">$0</span></div>
 <div class="total grand" id="grandRow" style="display:none"><span class="tk">Total incl. trade fee</span><span class="tv" id="grand">$0</span></div>
+<div id="chgtally" class="chgtally" hidden></div>
 <div class="notes"><label for="notesin">Notes / special requests</label><textarea id="notesin"></textarea></div>
 <div class="leadtime"><b>Lead time:</b> 4-5 months from finalized selections.</div>
 <div class="actions">
@@ -198,13 +192,14 @@ function chg(i){
  }
  return Object.keys(c).length?c:null;
 }
-function chgPill(i){
+function chgNote(i){
  const c=chg(i); if(!c)return'';
- let t;
- if(c.removed)t='Removed';
- else if(c.addedback)t='Added back';
- else { const p=[]; if(c.tier)p.push('<s>'+esc(c.tier.from)+'</s> '+esc(c.tier.to)); if(c.qty)p.push('qty <s>'+fmtq(c.qty.from)+'</s> '+fmtq(c.qty.to)); t=p.join(' \u00b7 '); }
- return ' <span class="chgpill">Changed</span>'+(t?'<span class="chgdtl">'+t+'</span>':'');
+ if(c.removed) return ' <span class="chgnote">removed</span>';
+ if(c.addedback) return ' <span class="chgnote">added back</span>';
+ const p=[];
+ if(c.tier)p.push('<s>'+esc(c.tier.from)+'</s> '+esc(c.tier.to));
+ if(c.qty)p.push('qty <s>'+fmtq(c.qty.from)+'</s> '+fmtq(c.qty.to));
+ return ' <span class="chgnote">'+p.join(' \u00b7 ')+'</span>';
 }
 function timeago(iso){ try{ const s=Math.max(0,(Date.now()-new Date(iso).getTime())/1000); if(s<60)return'just now'; if(s<3600)return Math.floor(s/60)+'m ago'; if(s<86400)return Math.floor(s/3600)+'h ago'; return Math.floor(s/86400)+'d ago'; }catch(e){return'';} }
 function stateObj(){ const byLabel={}; ITEMS.forEach((it,i)=>{ byLabel[it.label]={tier:(it.opts[sel[i]]||{}).tierFull||null, qty:qty[i], removed:removed[i]}; }); return {byLabel, custom:custom.map(o=>({...o})), v:1}; }
@@ -213,13 +208,13 @@ async function qload(){ try{ const r=await fetch(QREST+"/quote_state?id=eq."+QID
 function qsave(){ if(!QLOADED)return; clearTimeout(qsaveT); qsaveT=setTimeout(async()=>{ try{ const now=new Date().toISOString(); const body={id:QID,state:stateObj(),updated_at:now}; await fetch(QREST+"/quote_state?on_conflict=id",{method:'POST',headers:Object.assign({'Content-Type':'application/json',Prefer:'resolution=merge-duplicates,return=minimal'},QH),body:JSON.stringify(body)}); QTS=now; }catch(e){} },700); }
 function qreset(){ snapshot(); for(let i=0;i<sel.length;i++){ sel[i]=defSel[i]; qty[i]=defQty[i]; removed[i]=defRemoved[i]; } custom.splice(0,custom.length); render(); }
 function refreshChg(){
- const bar=document.getElementById('chgbar'); if(!bar)return;
- const items=[];
- ITEMS.forEach((it,i)=>{ const c=chg(i); if(!c)return; let d; if(c.removed)d='removed'; else if(c.addedback)d='added back'; else { const p=[]; if(c.tier)p.push('<s>'+esc(c.tier.from)+'</s><span class="ar">\u2192</span>'+esc(c.tier.to)); if(c.qty)p.push('qty <s>'+fmtq(c.qty.from)+'</s><span class="ar">\u2192</span>'+fmtq(c.qty.to)); d=p.join(', '); } items.push('<span class="chgchip"><b>'+esc(it.label)+'</b> '+d+'</span>'); });
- custom.forEach(c=>items.push('<span class="chgchip"><b>'+esc(c.name)+'</b> added</span>'));
- if(!items.length){ bar.hidden=true; bar.innerHTML=''; return; }
- bar.hidden=false;
- bar.innerHTML='<div class="chgtop"><span class="chglbl">Changes from proposed</span><span class="chgn">'+items.length+'</span>'+(QTS?'<span class="chgsaved">saved '+timeago(QTS)+'</span>':'')+'<button class="chgx" type="button" onclick="qreset()">Reset to proposed</button></div><div class="chgchips">'+items.join('')+'</div>';
+ const t=document.getElementById('chgtally'); if(!t)return;
+ const rows=[];
+ ITEMS.forEach((it,i)=>{ const c=chg(i); if(!c)return; let d; if(c.removed)d='removed'; else if(c.addedback)d='added back'; else { const p=[]; if(c.tier)p.push('<s>'+esc(c.tier.from)+'</s><span class="ar">\u2192</span>'+esc(c.tier.to)); if(c.qty)p.push('qty <s>'+fmtq(c.qty.from)+'</s><span class="ar">\u2192</span>'+fmtq(c.qty.to)); d=p.join(', '); } rows.push('<li><b>'+esc(it.label)+'</b> \u2014 '+d+'</li>'); });
+ custom.forEach(c=>rows.push('<li><b>'+esc(c.name)+'</b> \u2014 added</li>'));
+ if(!rows.length){ t.hidden=true; t.innerHTML=''; return; }
+ t.hidden=false;
+ t.innerHTML='<div class="ct-h">Changes from proposed \u00b7 '+rows.length+(QTS?' \u00b7 saved '+timeago(QTS):'')+'</div><ul>'+rows.join('')+'</ul><button class="ct-reset" type="button" onclick="qreset()">Reset to proposed</button>';
 }
 let CLIENTPCT=0;
 function PM(){return document.body.classList.contains('clientmode')?(1+CLIENTPCT/100):1;}
@@ -229,9 +224,9 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 const openSec={rooms:false,public:false,sm:false};
 const QIMG={"Desk":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1791814254993-6kyhk3r.png","Desk chair":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1791816223416-95pek0w.jpg","Room Divider Screens":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1791813267027-z8vdo7f.png","Glass top - nightstands":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1791813872442-qgu0r5d.png","30×20″ Coffee Bar Tray":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1791814281602-5ezg3ol.png","C-Table Desk (18×24×28″)":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1791815446225-27mm6c4.png","Replace doors - coffee bars":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1791816839495-tj3wn3l.png","Coffee tables (guestrooms, replace ottomans)":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1791815500806-wr2dk0b.png","End / side tables - replace":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1791815594269-7uyrc4y.png","Dining chairs (with arms)":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1791817046243-nfmqtgt.jpg","Bedside lamps - adjustable":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1791817473495-6kg9fyz.jpg","Pillows (decorative, guestrooms)":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1791818057724-loiucde.jpg","Bed pillows":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1791818303415-qnfgcdt.jpg","Entry credenza - 72×25×42":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1793358816198-shinola-entry-console-room-render-v1.jpg","Lounge chairs (public + hallway)":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1791981131822-5l95vus.jpeg","Sofas - all (incl. hallway)":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1792072207257-ky5pd91.jpeg","Sofas - 3″ legs, reduced arm width (incl. hallway)":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1792432246224-qqjqsgw.jpeg","Dining tables - 2-top - San Morello":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1793182656000-sanmorello-2top-cream.jpg","Armchair - San Morello":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1791816223416-95pek0w.jpg","Entry side table - San Morello":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1791815594269-7uyrc4y.png","Entry lounge sofa - San Morello":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1792072207257-ky5pd91.jpeg","Entry coffee table - San Morello":"https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1791815500806-wr2dk0b.png"};
 function buildCard(it,i){
-const cp=chgPill(i);
-const d=document.createElement('div'); d.className='item'+(removed[i]?' removed':'')+(!removed[i]&&!it.tm&&qty[i]===0?' zero':'')+(chg(i)?' changed':'');
-if(it.tm){ d.innerHTML=`<button class="xbtn" data-rm="${i}" title="${removed[i]?'Add back to quote':'Remove item'}">${removed[i]?'+':'×'}</button><div class="ihead"><div><span class="iname">${it.label}</span>${cp}</div><div class="ipick" id="pick${i}"></div></div><div class="tmline">${it.tmNote||'Billed time & materials'}</div>`; return d; }
+const cn=chgNote(i);
+const d=document.createElement('div'); d.className='item'+(removed[i]?' removed':'')+(!removed[i]&&!it.tm&&qty[i]===0?' zero':'');
+if(it.tm){ d.innerHTML=`<button class="xbtn" data-rm="${i}" title="${removed[i]?'Add back to quote':'Remove item'}">${removed[i]?'+':'×'}</button><div class="ihead"><div><span class="iname">${it.label}</span>${cn}</div><div class="ipick" id="pick${i}"></div></div><div class="tmline">${it.tmNote||'Billed time & materials'}</div>`; return d; }
 let opts=''; const ul=(it.unit==='LF')?'/LF':(it.unit==='SF')?'/SF':'ea';
 it.opts.forEach((o,j)=>{
 const cl=(!o.avail?'opt na':(j===sel[i]?'opt sel':'opt'));
@@ -247,7 +242,7 @@ const QX={"Entry credenza - 72×25×42":["https://pwlsnajjoxhykyxslrej.supabase.
 const tx=(QX[it.label]||[]).map(u=>'<img class="ithumb sm" src="'+u+'" alt="" loading="lazy">').join('');
 const timg0=QIMG[it.label]?'<img class="ithumb" src="'+QIMG[it.label]+'" alt="" loading="lazy">':'';
 const timg=tx?'<div class="ithumbs">'+timg0+tx+'</div>':timg0;
-d.innerHTML=`${xb}<div class="irow">${timg}<div class="icontent"><div class="ihead"><div><span class="iname">${it.label}</span>${cp}${it.com?' <span class="com">COM</span>':''}${it.yd?' <span class="yd">'+it.yd+' yd/ea · '+(qty[i]*it.yd).toFixed(1).replace(/\.0$/,'')+' yd total</span>':''}<span class="iqty">qty <input class="qtyin" type="number" step="${stp}" data-i="${i}" min="${lb}" value="${fmtq(qty[i])}" title="Edit quantity">${it.prevQty!=null?' <s class="qprev">prev '+fmtq(it.prevQty)+'</s>':''}${hint}</span></div><div class="ipick" id="pick${i}"></div></div>${it.flag?'<div class="iflag">'+it.flag+'</div>':''}<div class="opts">${opts}</div></div></div>`;
+d.innerHTML=`${xb}<div class="irow">${timg}<div class="icontent"><div class="ihead"><div><span class="iname">${it.label}</span>${cn}${it.com?' <span class="com">COM</span>':''}${it.yd?' <span class="yd">'+it.yd+' yd/ea · '+(qty[i]*it.yd).toFixed(1).replace(/\.0$/,'')+' yd total</span>':''}<span class="iqty">qty <input class="qtyin" type="number" step="${stp}" data-i="${i}" min="${lb}" value="${fmtq(qty[i])}" title="Edit quantity">${it.prevQty!=null?' <s class="qprev">prev '+fmtq(it.prevQty)+'</s>':''}${hint}</span></div><div class="ipick" id="pick${i}"></div></div>${it.flag?'<div class="iflag">'+it.flag+'</div>':''}<div class="opts">${opts}</div></div></div>`;
 return d;
 }
 function render(){
