@@ -259,7 +259,7 @@ const QX={"Entry credenza - 72×25×42":["https://pwlsnajjoxhykyxslrej.supabase.
 const tx=(QX[it.label]||[]).map(u=>'<img class="ithumb sm" src="'+u+'" alt="" loading="lazy">').join('');
 const timg0=QIMG[it.label]?'<img class="ithumb" src="'+QIMG[it.label]+'" alt="" loading="lazy">':'';
 let timg=tx?'<div class="ithumbs">'+timg0+tx+'</div>':timg0;
-const staleRender=it.label!=='Glass top - nightstands' && (it.opts[sel[i]]||{}).tierFull!==it.rec;
+const staleRender=it.label!=='Glass top - nightstands' && it.label!=='End / side tables - replace' && (it.opts[sel[i]]||{}).tierFull!==it.rec;
 if(staleRender&&timg){ timg='<div class="staleimg">'+timg+'<div class="staletag">Render no longer matches selection</div></div>'; }
 d.innerHTML=`${xb}<div class="irow">${timg}<div class="icontent"><div class="ihead"><div><span class="iname">${it.label}</span>${cn}${it.com?' <span class="com">COM</span>':''}${it.yd?' <span class="yd">'+it.yd+' yd/ea · '+(qty[i]*it.yd).toFixed(1).replace(/\.0$/,'')+' yd total</span>':''}<span class="iqty">qty <input class="qtyin" type="number" step="${stp}" data-i="${i}" min="${lb}" value="${fmtq(qty[i])}" title="Edit quantity">${it.prevQty!=null?' <s class="qprev">prev '+fmtq(it.prevQty)+'</s>':''}${hint}</span></div><div class="ipick" id="pick${i}"></div></div>${it.flag?('<div class="iflag">'+(it.label==='Replace doors - coffee bars'?('Cabinet door paint color: <input class="paintin" data-key="'+esc(it.label)+'" type="text" value="'+esc(FIELD[it.label]||'')+'" placeholder="type color (saves automatically)">'):it.flag)+'</div>'):''}${sfNote}<div class="opts">${opts}</div></div></div>`;
 return d;
