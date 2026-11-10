@@ -134,6 +134,19 @@
 .gal figure{margin:0;width:calc(50% - 4px);cursor:zoom-in}
 .gal img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;display:block;background:#eee}
 .gal figcaption{font-size:11px;letter-spacing:.04em;opacity:.65;margin-top:4px}
+
+.graytog{flex:none;appearance:none;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);font-family:var(--font-mono);font-weight:600;font-size:10.5px;letter-spacing:.04em;padding:0 12px;border-radius:9px;cursor:pointer;white-space:nowrap}
+.graytog:hover{color:var(--ink);border-color:var(--muted)}
+.card.dimmed .thumb,.card.dimmed .pname,.card.dimmed .field,.card.dimmed .seg{opacity:.5;filter:saturate(.55);transition:opacity .12s ease}
+.card.dimmed .graytog{color:var(--ink);border-color:var(--accent);background:var(--surface)}
+.card.dimmed.pend{border:1px solid var(--line);background:var(--surface);box-shadow:var(--shadow)}
+.card.dimmed.pend::before{display:none}
+.foldsec{margin-top:8px}
+.foldhead{cursor:pointer;user-select:none}
+.foldhead h2{color:var(--muted)}
+.foldchev{font-size:11px;color:var(--muted);transition:transform .15s ease;display:inline-block;margin-right:2px}
+.foldhead.open .foldchev{transform:rotate(90deg)}
+.foldhead:hover h2{color:var(--ink)}
 </style>
 </head>
 <body>
@@ -185,6 +198,7 @@
   };
   var SECTIONS=["Guestrooms","Living Room"];
   var cards=new Map(), grids={}, pieces=[], uploadTarget=null;
+  var foldOpen=false;
   var filepick=document.getElementById("filepick");
 
   // ---- lightbox (click any photo to enlarge) ----
@@ -233,6 +247,21 @@
     });
   }
 
+  function ensureFolder(){
+    if(document.getElementById("foldsec")) return;
+    var host=document.getElementById("sections");
+    var sec=el("section","sec foldsec"); sec.id="foldsec"; sec.hidden=true;
+    var head=el("div","sechead foldhead"); head.id="foldhead";
+    head.appendChild(el("span","foldchev","\u25B8"));
+    head.appendChild(el("h2",null,"Not selected"));
+    var cnt=el("span","cnt"); cnt.id="cnt-fold"; head.appendChild(cnt);
+    head.appendChild(el("div","rule"));
+    var grid=el("div","grid"); grid.id="grid-fold"; grid.hidden=true;
+    head.addEventListener("click",function(){ foldOpen=!foldOpen; grid.hidden=!foldOpen; head.classList.toggle("open",foldOpen); });
+    sec.appendChild(head); sec.appendChild(grid);
+    host.appendChild(sec);
+  }
+
   function buildCard(p){
     var root=el("article","card");
     var thumb=el("div","thumb");
@@ -273,6 +302,9 @@
       seg.appendChild(b); btns[pr[0]]=b;
     });
     statusrow.appendChild(seg);
+    var graytog=el("button","graytog"); graytog.type="button"; graytog.title="Set aside as not selected";
+    graytog.addEventListener("click",function(){ var cp=byId(p.id); setSelected(p.id, cp?cp.selected===false:true); });
+    statusrow.appendChild(graytog);
 
     ph.addEventListener("click",function(){ uploadTarget={id:p.id,mode:"render"}; filepick.click(); });
     img.addEventListener("click",function(){ var s=img.getAttribute("src"); if(s) openLB(s, (byId(p.id)||p).name||""); });
@@ -285,7 +317,7 @@
     body.appendChild(name); body.appendChild(specWrap); body.appendChild(swWrap); body.appendChild(notesWrap); body.appendChild(statusrow);
     root.appendChild(thumb); root.appendChild(gal); root.appendChild(body);
 
-    return {root:root,gal:gal,lastGal:undefined,fill:fill,img:img,ph:ph,busy:busy,replace:replace,zoomctl:zoomctl,name:name,specEdit:specEdit,notesEdit:notesEdit,swLbl:swLbl,swRow:swRow,seg:seg,btns:btns,lastImg:undefined,lastSw:undefined};
+    return {root:root,gal:gal,lastGal:undefined,fill:fill,img:img,ph:ph,busy:busy,replace:replace,zoomctl:zoomctl,name:name,specEdit:specEdit,notesEdit:notesEdit,swLbl:swLbl,swRow:swRow,seg:seg,btns:btns,graytog:graytog,lastImg:undefined,lastSw:undefined};
   }
 
   function renderSwatches(refs,p){
@@ -320,6 +352,7 @@
     var st=(p.status==="approved"||p.status==="revise")?p.status:"pending";
     Object.keys(refs.btns).forEach(function(k){ refs.btns[k].setAttribute("aria-pressed",k===st?"true":"false"); });
     refs.root.classList.toggle("ok",st==="approved"); refs.root.classList.toggle("rev",st==="revise"); refs.root.classList.toggle("pend",st==="pending");
+    var _sel=(p.selected!==false); refs.root.classList.toggle("dimmed",!_sel); if(refs.graytog) refs.graytog.textContent=_sel?"Gray out":"Restore";
     var url=p.image_url||null;
     if(url!==refs.lastImg){ refs.lastImg=url;
       if(url){ refs.img.src=url; refs.img.hidden=false; refs.ph.hidden=true; refs.fill.style.backgroundImage="url('"+url+"')"; refs.fill.hidden=false; }
@@ -343,18 +376,25 @@
   }
 
   function render(){
-    ensureSections();
+    ensureSections(); ensureFolder();
     var counts={}; SECTIONS.forEach(function(s){counts[s]=0;});
+    var foldCount=0, foldGrid=document.getElementById("grid-fold");
     var seen=new Set();
     pieces.slice().sort(function(a,b){return (a.ord||0)-(b.ord||0);}).forEach(function(p){
       seen.add(p.id);
-      var sec=SECTIONS.indexOf(p.section)>=0?p.section:SECTIONS[0];
       var refs=cards.get(p.id); if(!refs){ refs=buildCard(p); cards.set(p.id,refs); }
-      updateCard(refs,p); grids[sec].appendChild(refs.root); counts[sec]++;
+      updateCard(refs,p);
+      if(p.selected===false){ foldGrid.appendChild(refs.root); foldCount++; }
+      else { var sec=SECTIONS.indexOf(p.section)>=0?p.section:SECTIONS[0]; grids[sec].appendChild(refs.root); counts[sec]++; }
     });
     Array.from(cards.keys()).forEach(function(id){ if(!seen.has(id)){ cards.get(id).root.remove(); cards.delete(id);} });
     SECTIONS.forEach(function(s){ var c=document.getElementById("cnt-"+s); if(c) c.textContent=counts[s]+(counts[s]===1?" piece":" pieces"); });
-    var total=pieces.length, approved=pieces.filter(function(p){return p.status==="approved";}).length;
+    var foldsec=document.getElementById("foldsec"), fc=document.getElementById("cnt-fold"), fh=document.getElementById("foldhead");
+    if(foldCount>0){ foldsec.hidden=false; if(fc) fc.textContent=foldCount+(foldCount===1?" piece":" pieces"); }
+    else { foldsec.hidden=true; foldOpen=false; }
+    foldGrid.hidden=!foldOpen; if(fh) fh.classList.toggle("open",foldOpen);
+    var active=pieces.filter(function(p){return p.selected!==false;});
+    var total=active.length, approved=active.filter(function(p){return p.status==="approved";}).length;
     document.getElementById("mApproved").textContent=approved; document.getElementById("mTotal").textContent=total;
     var pct=total?Math.round(approved/total*100):0;
     var fill=document.getElementById("mFill"); fill.style.width=pct+"%"; fill.style.background=(approved===total&&total>0)?"var(--ok)":"var(--accent)";
@@ -365,6 +405,7 @@
   function curZoom(id){ var p=byId(id); var z=p&&p.image_zoom; return (typeof z==="number"&&z>0)?z:1; }
   function setZoom(id,z){ z=Math.max(0.5,Math.min(4,Math.round(z*100)/100)); var p=byId(id); if(!p) return; p.image_zoom=z; var refs=cards.get(id); if(refs){ refs.img.style.transform="scale("+z+")"; } patch(id,{image_zoom:z}).then(markSynced).catch(flagErr); }
   function setStatus(id,v){ var p=byId(id); if(!p||p.status===v) return; localSet(id,"status",v); render(); patch(id,{status:v}).then(markSynced).catch(flagErr); }
+  function setSelected(id,val){ var p=byId(id); if(!p||((p.selected!==false)===val)) return; p.selected=val; render(); patch(id,{selected:val}).then(markSynced).catch(flagErr); }
   function commitField(id,field,val){ var p=byId(id); if(!p||(p[field]||"")===val) return; localSet(id,field,val); var b={}; b[field]=val; patch(id,b).then(markSynced).catch(flagErr); }
   function setSwatchLabel(id,idx,label){ var p=byId(id); var arr=swOf(p).slice(); if(!arr[idx]||(arr[idx].label||"")===label) return; arr[idx]={url:arr[idx].url,label:label}; localSet(id,"swatches",arr); patch(id,{swatches:arr}).then(markSynced).catch(flagErr); }
   function removeSwatch(id,idx){ var p=byId(id); var arr=swOf(p).slice(); if(!arr[idx]) return; arr.splice(idx,1); localSet(id,"swatches",arr); render(); patch(id,{swatches:arr}).then(markSynced).catch(flagErr); }
