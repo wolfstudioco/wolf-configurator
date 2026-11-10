@@ -89,7 +89,7 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 .staleimg{position:relative;display:inline-block}
 .staleimg>.ithumb,.staleimg>.ithumbs{opacity:.72}
 .staleimg::before{content:"";position:absolute;left:0;right:0;top:0;bottom:20px;background:linear-gradient(to top right,transparent calc(50% - 0.5px),rgba(155,57,37,.4) calc(50% - 0.5px),rgba(155,57,37,.4) calc(50% + 0.5px),transparent calc(50% + 0.5px));pointer-events:none;z-index:2}
-.staletag{font-size:9.5px;line-height:1.2;color:#8a8676;font-weight:600;margin-top:3px}
+.staletag{font-size:9.5px;line-height:1.3;color:#8a8676;font-weight:600;margin-top:3px;max-width:100px;white-space:normal}
 .paintin{font:inherit;font-size:12px;font-weight:700;color:#14181e;background:#fff;border:1px solid #9b3925;border-radius:3px;padding:3px 8px;min-width:220px;margin-top:2px}
 .paintin::placeholder{color:#b4ab97;font-weight:500}
 .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
@@ -257,7 +257,7 @@ const tx=(QX[it.label]||[]).map(u=>'<img class="ithumb sm" src="'+u+'" alt="" lo
 const timg0=QIMG[it.label]?'<img class="ithumb" src="'+QIMG[it.label]+'" alt="" loading="lazy">':'';
 let timg=tx?'<div class="ithumbs">'+timg0+tx+'</div>':timg0;
 const staleRender=(it.opts[sel[i]]||{}).tierFull!==it.rec;
-if(staleRender&&timg){ timg='<div class="staleimg">'+timg+'<div class="staletag">Render no longer applies · selection changed</div></div>'; }
+if(staleRender&&timg){ timg='<div class="staleimg">'+timg+'<div class="staletag">Render no longer matches selection</div></div>'; }
 d.innerHTML=`${xb}<div class="irow">${timg}<div class="icontent"><div class="ihead"><div><span class="iname">${it.label}</span>${cn}${it.com?' <span class="com">COM</span>':''}${it.yd?' <span class="yd">'+it.yd+' yd/ea · '+(qty[i]*it.yd).toFixed(1).replace(/\.0$/,'')+' yd total</span>':''}<span class="iqty">qty <input class="qtyin" type="number" step="${stp}" data-i="${i}" min="${lb}" value="${fmtq(qty[i])}" title="Edit quantity">${it.prevQty!=null?' <s class="qprev">prev '+fmtq(it.prevQty)+'</s>':''}${hint}</span></div><div class="ipick" id="pick${i}"></div></div>${it.flag?('<div class="iflag">'+(it.label==='Replace doors - coffee bars'?('Cabinet door paint color: <input class="paintin" data-key="'+esc(it.label)+'" type="text" value="'+esc(FIELD[it.label]||'')+'" placeholder="type color (saves automatically)">'):it.flag)+'</div>'):''}${sfNote}<div class="opts">${opts}</div></div></div>`;
 return d;
 }
