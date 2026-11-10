@@ -92,6 +92,8 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 .staletag{font-size:9.5px;line-height:1.3;color:#8a8676;font-weight:600;margin-top:3px;max-width:100px;white-space:normal}
 .paintin{font:inherit;font-size:12px;font-weight:700;color:#14181e;background:#fff;border:1px solid #9b3925;border-radius:3px;padding:3px 8px;min-width:220px;margin-top:2px}
 .paintin::placeholder{color:#b4ab97;font-weight:500}
+.smwrap{margin-top:30px;border-top:2px solid #14181e}
+.smhdr{font-size:12px;font-weight:700;color:#8a8676;letter-spacing:.03em;text-transform:uppercase;margin:14px 0 10px}
 .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
 .total{display:flex;justify-content:flex-end;align-items:baseline;gap:12px;border-top:2px solid #14181e;margin-top:22px;padding-top:14px}
 .tk{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:#4a473e}
@@ -164,7 +166,6 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 </div>
 <div class="subtot"><span class="tk">Guestrooms Subtotal</span><span class="tv2" id="goods">$0</span></div>
 <div class="subtot"><span class="tk">Living Room Subtotal</span><span class="tv2" id="goodsPub">$0</span></div>
-<div class="subtot" id="smSubRow"><span class="tk">San Morello Subtotal</span><span class="tv2" id="goodsSM">$0</span></div>
 <div class="total"><span class="tk">Furnishings Subtotal</span><span class="tv" id="goodsAll">$0</span></div>
 <div class="delivered">+ Delivery avg +15%<br>+ Install avg +16%</div>
 <div class="feerow"><span class="tk">Trade fee <input id="feePct" class="feein" type="number" min="0" step="0.5" value="0" title="Trade fee %">%</span><span class="tv2" id="feeAmt">$0</span></div>
@@ -176,6 +177,7 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 <div class="actcol"><button class="btn pri" onclick="printInternal()">Print / Save PDF</button><span class="btn-sub">Trade copy: trade fee listed separately</span></div>
 <div class="actcol"><button class="btn" onclick="printClient()">Print / Save: Client version</button><span class="btn-sub">For the client: trade fee rolled into prices</span></div>
 </div>
+<div class="smwrap" id="smwrap"><div class="smhdr">San Morello · priced separately, not included in the total above</div><div class="list" id="smlist"></div><div class="total"><span class="tk">San Morello Subtotal</span><span class="tv" id="goodsSM">$0</span></div></div>
 
 </div>
 <button class="undo" id="undoBtn" onclick="undo()" disabled>↺ Undo</button>
@@ -191,12 +193,12 @@ const SUPA_KEY="sb_publishable_pPq6FsUd4G6Pp8uE_G5YhA_FgMfUxdG";
 const QREST=SUPA_URL+"/rest/v1";
 const QH={apikey:SUPA_KEY,Authorization:"Bearer "+SUPA_KEY};
 const QID="shinola";
-const SHOW_SM=false;
+const SHOW_SM=true;
 const defSel=sel.slice(), defQty=qty.slice(), defRemoved=removed.slice();
 let QLOADED=false, QTS=null, qsaveT=null;
 function chg(i){
  const it=ITEMS[i], c={};
- if(!SHOW_SM&&it.sm)return null;
+ if(it.sm)return null;
  if(removed[i]!==defRemoved[i]){ if(removed[i])c.removed=true; else c.addedback=true; }
  if(!removed[i] && !it.tm){
   if(sel[i]!==defSel[i] && it.opts[sel[i]]) c.tier={from:(it.opts[defSel[i]]||{}).tier||'-', to:it.opts[sel[i]].tier};
@@ -263,7 +265,7 @@ d.innerHTML=`${xb}<div class="irow">${timg}<div class="icontent"><div class="ihe
 return d;
 }
 function render(){
-const L=document.getElementById('list'); L.innerHTML='';
+const L=document.getElementById('list'); L.innerHTML=''; const SML=document.getElementById('smlist'); if(SML)SML.innerHTML='';
 const SECS=[{k:'rooms',n:'Shinola Rooms',s:'subRooms',t:it=>!it.pub&&!it.sm},{k:'public',n:'Living Room',s:'subPublic',t:it=>it.pub&&!it.sm},{k:'sm',n:'San Morello',s:'subSM',t:it=>!!it.sm}].filter(x=>x.k!=='sm'||SHOW_SM);
 SECS.forEach(sec=>{
 const idxs=[]; ITEMS.forEach((it,i)=>{if(sec.t(it))idxs.push(i);});
@@ -277,7 +279,7 @@ hdr.addEventListener('click',()=>{openSec[sec.k]=!openSec[sec.k];render();});
 wrap.appendChild(hdr);
 const body=document.createElement('div'); body.className='sec-body'; if(!openSec[sec.k])body.style.display='none';
 idxs.forEach(i=>body.appendChild(buildCard(ITEMS[i],i)));
-wrap.appendChild(body); L.appendChild(wrap);
+wrap.appendChild(body); (sec.k==='sm'&&SML?SML:L).appendChild(wrap);
 });
 L.querySelectorAll('.opt').forEach(el=>{
 el.addEventListener('click',()=>{
@@ -338,6 +340,7 @@ setTimeout(()=>{if(document.body.classList.contains('clientmode')){document.body
 function sendEmail(){
 let lines=[], goods=0;
 ITEMS.forEach((it,i)=>{
+if(it.sm)return;
 const o=it.opts[sel[i]]; const t=o&&o.avail?qty[i]*uPrice(i,o):0; goods+=t;
 lines.push(`- ${it.label} (qty ${qty[i]}): ${o.tier} = ${money(t)}`);
 });
@@ -356,7 +359,7 @@ const o=it.opts[sel[i]]; if(o&&o.avail&&!removed[i]){const amt=qty[i]*uPrice(i,o
 const p=document.getElementById('pick'+i); if(p)p.innerHTML=removed[i]?'<span class="rmlbl">Not included</span>':`${o.tier}`;
 });
 custom.forEach(c=>{goods+=(c.qty||0)*(c.budget||0)*PM();});
-const total=goods+goodsPub+goodsSM;
+const total=goods+goodsPub;
 const g=document.getElementById('goods'); if(g)g.textContent=money(goods);
 const gp=document.getElementById('goodsPub'); if(gp)gp.textContent=money(goodsPub);
 const gsm=document.getElementById('goodsSM'); if(gsm)gsm.textContent=money(goodsSM);
