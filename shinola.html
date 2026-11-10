@@ -86,6 +86,10 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 .opt.sel .wl{color:#e6b39e}
 .rec-tag{position:absolute;top:-8px;right:8px;background:#9b3925;color:#fff;font-size:9.5px;letter-spacing:.05em;font-weight:700;padding:2px 6px;border-radius:3px;text-transform:uppercase}
 .opt.recy{background:#f3e3c0;border-color:#9b3925}
+.staleimg{position:relative;display:inline-block}
+.staleimg>.ithumb,.staleimg>.ithumbs{opacity:.5;filter:grayscale(.35)}
+.staleimg::before{content:"";position:absolute;left:0;right:0;top:0;bottom:22px;background:linear-gradient(to top right,transparent calc(50% - 1.5px),#9b3925 calc(50% - 1.5px),#9b3925 calc(50% + 1.5px),transparent calc(50% + 1.5px));pointer-events:none;z-index:2}
+.staletag{font-size:10px;line-height:1.15;color:#9b3925;font-weight:700;text-transform:uppercase;letter-spacing:.03em;margin-top:4px}
 .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
 .total{display:flex;justify-content:flex-end;align-items:baseline;gap:12px;border-top:2px solid #14181e;margin-top:22px;padding-top:14px}
 .tk{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:#4a473e}
@@ -249,7 +253,9 @@ const xb=`<button class="xbtn" data-rm="${i}" title="${removed[i]?'Add back to q
 const QX={"Entry credenza - 72×25×42":["https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/1793358817050-shinola-entry-console-lid-umbrella-closeup-v1.jpg"]};
 const tx=(QX[it.label]||[]).map(u=>'<img class="ithumb sm" src="'+u+'" alt="" loading="lazy">').join('');
 const timg0=QIMG[it.label]?'<img class="ithumb" src="'+QIMG[it.label]+'" alt="" loading="lazy">':'';
-const timg=tx?'<div class="ithumbs">'+timg0+tx+'</div>':timg0;
+let timg=tx?'<div class="ithumbs">'+timg0+tx+'</div>':timg0;
+const staleRender=(it.label==='Entry credenza - 72×25×42'||it.label==='Lounge chairs (public + hallway)')&&(it.opts[sel[i]]||{}).tierFull!==it.rec;
+if(staleRender&&timg){ timg='<div class="staleimg">'+timg+'<div class="staletag">Render no longer applies · selection changed</div></div>'; }
 d.innerHTML=`${xb}<div class="irow">${timg}<div class="icontent"><div class="ihead"><div><span class="iname">${it.label}</span>${cn}${it.com?' <span class="com">COM</span>':''}${it.yd?' <span class="yd">'+it.yd+' yd/ea · '+(qty[i]*it.yd).toFixed(1).replace(/\.0$/,'')+' yd total</span>':''}<span class="iqty">qty <input class="qtyin" type="number" step="${stp}" data-i="${i}" min="${lb}" value="${fmtq(qty[i])}" title="Edit quantity">${it.prevQty!=null?' <s class="qprev">prev '+fmtq(it.prevQty)+'</s>':''}${hint}</span></div><div class="ipick" id="pick${i}"></div></div>${it.flag?'<div class="iflag">'+it.flag+'</div>':''}${sfNote}<div class="opts">${opts}</div></div></div>`;
 return d;
 }
