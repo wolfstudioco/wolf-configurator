@@ -85,6 +85,7 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 .wl{font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#9b3925;margin-top:6px}
 .opt.sel .wl{color:#e6b39e}
 .rec-tag{position:absolute;top:-8px;right:8px;background:#9b3925;color:#fff;font-size:9.5px;letter-spacing:.05em;font-weight:700;padding:2px 6px;border-radius:3px;text-transform:uppercase}
+.opt.recy{background:#f3e3c0;border-color:#9b3925}
 .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
 .total{display:flex;justify-content:flex-end;align-items:baseline;gap:12px;border-top:2px solid #14181e;margin-top:22px;padding-top:14px}
 .tk{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:#4a473e}
@@ -240,7 +241,7 @@ const wl=(!it.noWL&&((it.bar&&o.tier==='Ultra')||(!it.bar&&o.tier==='Premium')))
 const rt=(it.label.indexOf('Sofas - ')===0&&o.tierFull===it.rec)?'<span class="rec-tag">Recommended</span>':'';
 const priceHtml=o.avail?(money(o.unit*PM())+(qty[i]>1?' <span class="per">'+ul+'</span>':'')):'-';
 const totalHtml=(o.avail&&qty[i]>1)?('<span class="tl">Total</span>'+money(qty[i]*o.unit*PM())):'';
-opts+=`<div class="${cl}" data-i="${i}" data-j="${j}">${rt}<div class="otier">${o.tier}</div><div class="odesc">${o.desc}</div><div class="oprice">${priceHtml}</div><div class="ototal">${totalHtml}</div>${wl}</div>`;
+opts+=`<div class="${cl}${rt?' recy':''}" data-i="${i}" data-j="${j}">${rt}<div class="otier">${o.tier}</div><div class="odesc">${o.desc}</div><div class="oprice">${priceHtml}</div><div class="ototal">${totalHtml}</div>${wl}</div>`;
 });
 const lb=lowerBound(i); const stp=(it.unit==='LF')?'0.5':'1';
 const hint=(it.unit==='LF')?'<span class="qhint">per LF</span>':(it.unit==='SF')?'<span class="qhint">per SF</span>':'';
