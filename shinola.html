@@ -237,9 +237,10 @@ let opts=''; const ul=(it.unit==='LF')?'/LF':(it.unit==='SF')?'/SF':'ea';
 it.opts.forEach((o,j)=>{
 const cl=(!o.avail?'opt na':(j===sel[i]?'opt sel':'opt'));
 const wl=(!it.noWL&&((it.bar&&o.tier==='Ultra')||(!it.bar&&o.tier==='Premium')))?'<div class="wl">White Label available</div>':'';
+const rt=(it.label.indexOf('Sofas - ')===0&&o.tierFull===it.rec)?'<span class="rec-tag">Recommended</span>':'';
 const priceHtml=o.avail?(money(o.unit*PM())+(qty[i]>1?' <span class="per">'+ul+'</span>':'')):'-';
 const totalHtml=(o.avail&&qty[i]>1)?('<span class="tl">Total</span>'+money(qty[i]*o.unit*PM())):'';
-opts+=`<div class="${cl}" data-i="${i}" data-j="${j}"><div class="otier">${o.tier}</div><div class="odesc">${o.desc}</div><div class="oprice">${priceHtml}</div><div class="ototal">${totalHtml}</div>${wl}</div>`;
+opts+=`<div class="${cl}" data-i="${i}" data-j="${j}">${rt}<div class="otier">${o.tier}</div><div class="odesc">${o.desc}</div><div class="oprice">${priceHtml}</div><div class="ototal">${totalHtml}</div>${wl}</div>`;
 });
 const lb=lowerBound(i); const stp=(it.unit==='LF')?'0.5':'1';
 const hint=(it.unit==='LF')?'<span class="qhint">per LF</span>':(it.unit==='SF')?'<span class="qhint">per SF</span>':'';
