@@ -136,6 +136,9 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 .chgtally .ct-reset:hover{border-color:#9b3925;color:#9b3925}
 .clientmode .chgnote,.clientmode .chgtally{display:none!important}
 @media print{.chgtally .ct-reset{display:none}.clientmode .chgtally{display:none!important}}
+.actcol{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.btn-sub{font-size:11px;color:#8a8676;letter-spacing:.01em;max-width:210px;text-align:right;line-height:1.35}
+@media(max-width:520px){.btn-sub{max-width:160px}}
 </style></head><body><div class="wrap">
 <h1>WOLF | SHINOLA - Furniture Refresh</h1>
 <p class="sub">Build your quote - Tiered options</p>
@@ -163,8 +166,8 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 <div class="notes"><label for="notesin">Notes / special requests</label><textarea id="notesin"></textarea></div>
 <div class="leadtime"><b>Lead time:</b> 4-5 months from finalized selections.</div>
 <div class="actions">
-<button class="btn pri" onclick="printInternal()">Print / Save PDF</button>
-<button class="btn" onclick="printClient()">Print / Save: Client version</button>
+<div class="actcol"><button class="btn pri" onclick="printInternal()">Print / Save PDF</button><span class="btn-sub">Your copy — trade fee listed separately, change notes shown</span></div>
+<div class="actcol"><button class="btn" onclick="printClient()">Print / Save: Client version</button><span class="btn-sub">For the client — fee rolled into prices, change notes hidden</span></div>
 </div>
 
 </div>
@@ -187,7 +190,7 @@ function chg(i){
  const it=ITEMS[i], c={};
  if(removed[i]!==defRemoved[i]){ if(removed[i])c.removed=true; else c.addedback=true; }
  if(!removed[i] && !it.tm){
-  if(sel[i]!==defSel[i] && it.opts[sel[i]]) c.tier={from:(it.opts[defSel[i]]||{}).tier||'\u2014', to:it.opts[sel[i]].tier};
+  if(sel[i]!==defSel[i] && it.opts[sel[i]]) c.tier={from:(it.opts[defSel[i]]||{}).tier||'—', to:it.opts[sel[i]].tier};
   if(qty[i]!==defQty[i]) c.qty={from:defQty[i], to:qty[i]};
  }
  return Object.keys(c).length?c:null;
@@ -210,8 +213,8 @@ function qreset(){ snapshot(); for(let i=0;i<sel.length;i++){ sel[i]=defSel[i]; 
 function refreshChg(){
  const t=document.getElementById('chgtally'); if(!t)return;
  const rows=[];
- ITEMS.forEach((it,i)=>{ const c=chg(i); if(!c)return; let d; if(c.removed)d='removed'; else if(c.addedback)d='added back'; else { const p=[]; if(c.tier)p.push('<s>'+esc(c.tier.from)+'</s><span class="ar">\u2192</span>'+esc(c.tier.to)); if(c.qty)p.push('qty <s>'+fmtq(c.qty.from)+'</s><span class="ar">\u2192</span>'+fmtq(c.qty.to)); d=p.join(', '); } rows.push('<li><b>'+esc(it.label)+'</b> \u2014 '+d+'</li>'); });
- custom.forEach(c=>rows.push('<li><b>'+esc(c.name)+'</b> \u2014 added</li>'));
+ ITEMS.forEach((it,i)=>{ const c=chg(i); if(!c)return; let d; if(c.removed)d='removed'; else if(c.addedback)d='added back'; else { const p=[]; if(c.tier)p.push('<s>'+esc(c.tier.from)+'</s><span class="ar">\u2192</span>'+esc(c.tier.to)); if(c.qty)p.push('qty <s>'+fmtq(c.qty.from)+'</s><span class="ar">\u2192</span>'+fmtq(c.qty.to)); d=p.join(', '); } rows.push('<li><b>'+esc(it.label)+'</b> — '+d+'</li>'); });
+ custom.forEach(c=>rows.push('<li><b>'+esc(c.name)+'</b> — added</li>'));
  if(!rows.length){ t.hidden=true; t.innerHTML=''; return; }
  t.hidden=false;
  t.innerHTML='<div class="ct-h">Changes from proposed \u00b7 '+rows.length+(QTS?' \u00b7 saved '+timeago(QTS):'')+'</div><ul>'+rows.join('')+'</ul><button class="ct-reset" type="button" onclick="qreset()">Reset to proposed</button>';
