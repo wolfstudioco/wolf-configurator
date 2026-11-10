@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Wolf Studio — Finish Approvals</title>
+<title>Wolf Studio - Finish Approvals</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Spline+Sans+Mono:wght@400;500&display=swap">
@@ -388,7 +388,7 @@
 
   // ---- sync ----
   function markSynced(){ var s=document.getElementById("synced"); if(s){ var d=new Date(); s.textContent="Saved "+d.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}); } }
-  function flagErr(){ var s=document.getElementById("synced"); if(s){ s.textContent="Couldn’t save — check your connection"; } }
+  function flagErr(){ var s=document.getElementById("synced"); if(s){ s.textContent="Couldn’t save - check your connection"; } }
   function refresh(){ loadPieces().then(function(rows){ if(!rows) return; pieces=rows; render(); }); }
 
   // ---- boot ----
