@@ -87,9 +87,11 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 .rec-tag{position:absolute;top:-8px;right:8px;background:#9b3925;color:#fff;font-size:9.5px;letter-spacing:.05em;font-weight:700;padding:2px 6px;border-radius:3px;text-transform:uppercase}
 .opt.recy{background:#f3e3c0;border-color:#9b3925}
 .staleimg{position:relative;display:inline-block}
-.staleimg>.ithumb,.staleimg>.ithumbs{opacity:.5;filter:grayscale(.35)}
-.staleimg::before{content:"";position:absolute;left:0;right:0;top:0;bottom:22px;background:linear-gradient(to top right,transparent calc(50% - 1.5px),#9b3925 calc(50% - 1.5px),#9b3925 calc(50% + 1.5px),transparent calc(50% + 1.5px));pointer-events:none;z-index:2}
-.staletag{font-size:10px;line-height:1.15;color:#9b3925;font-weight:700;text-transform:uppercase;letter-spacing:.03em;margin-top:4px}
+.staleimg>.ithumb,.staleimg>.ithumbs{opacity:.72}
+.staleimg::before{content:"";position:absolute;left:0;right:0;top:0;bottom:20px;background:linear-gradient(to top right,transparent calc(50% - 0.5px),rgba(155,57,37,.4) calc(50% - 0.5px),rgba(155,57,37,.4) calc(50% + 0.5px),transparent calc(50% + 0.5px));pointer-events:none;z-index:2}
+.staletag{font-size:9.5px;line-height:1.2;color:#8a8676;font-weight:600;margin-top:3px}
+.paintin{font:inherit;font-size:12px;font-weight:700;color:#14181e;background:#fff;border:1px solid #9b3925;border-radius:3px;padding:3px 8px;min-width:220px;margin-top:2px}
+.paintin::placeholder{color:#b4ab97;font-weight:500}
 .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
 .total{display:flex;justify-content:flex-end;align-items:baseline;gap:12px;border-top:2px solid #14181e;margin-top:22px;padding-top:14px}
 .tk{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:#4a473e}
@@ -183,7 +185,7 @@ const money=x=>x==null?"-":"$"+Math.round(x).toLocaleString();
 const sel=ITEMS.map(it=>it.opts.findIndex(o=>o.tierFull===it.rec));
 const qty=ITEMS.map(it=>it.qty);
 const removed=ITEMS.map(it=>!!it.off);
-const custom=[];
+const custom=[]; const FIELD={};
 const SUPA_URL="https://pwlsnajjoxhykyxslrej.supabase.co";
 const SUPA_KEY="sb_publishable_pPq6FsUd4G6Pp8uE_G5YhA_FgMfUxdG";
 const QREST=SUPA_URL+"/rest/v1";
@@ -212,8 +214,8 @@ function chgNote(i){
  return ' <span class="chgnote">'+p.join(' \u00b7 ')+'</span>';
 }
 function timeago(iso){ try{ const s=Math.max(0,(Date.now()-new Date(iso).getTime())/1000); if(s<60)return'just now'; if(s<3600)return Math.floor(s/60)+'m ago'; if(s<86400)return Math.floor(s/3600)+'h ago'; return Math.floor(s/86400)+'d ago'; }catch(e){return'';} }
-function stateObj(){ const byLabel={}; ITEMS.forEach((it,i)=>{ byLabel[it.label]={tier:(it.opts[sel[i]]||{}).tierFull||null, qty:qty[i], removed:removed[i]}; }); return {byLabel, custom:custom.map(o=>({...o})), v:1}; }
-function applyState(st){ if(!st)return; if(st.byLabel){ ITEMS.forEach((it,i)=>{ const v=st.byLabel[it.label]; if(!v)return; if(v.tier!=null){ const j=it.opts.findIndex(o=>o.tierFull===v.tier); if(j>=0)sel[i]=j; } if(typeof v.qty==='number')qty[i]=v.qty; if(typeof v.removed==='boolean')removed[i]=v.removed; }); } if(Array.isArray(st.custom)){ custom.splice(0,custom.length,...st.custom.map(o=>({...o}))); } }
+function stateObj(){ const byLabel={}; ITEMS.forEach((it,i)=>{ byLabel[it.label]={tier:(it.opts[sel[i]]||{}).tierFull||null, qty:qty[i], removed:removed[i]}; }); return {byLabel, custom:custom.map(o=>({...o})), fields:Object.assign({},FIELD), v:1}; }
+function applyState(st){ if(!st)return; if(st.byLabel){ ITEMS.forEach((it,i)=>{ const v=st.byLabel[it.label]; if(!v)return; if(v.tier!=null){ const j=it.opts.findIndex(o=>o.tierFull===v.tier); if(j>=0)sel[i]=j; } if(typeof v.qty==='number')qty[i]=v.qty; if(typeof v.removed==='boolean')removed[i]=v.removed; }); } if(Array.isArray(st.custom)){ custom.splice(0,custom.length,...st.custom.map(o=>({...o}))); } if(st.fields&&typeof st.fields==='object'){ Object.keys(st.fields).forEach(k=>{FIELD[k]=st.fields[k];}); } }
 async function qload(){ try{ const r=await fetch(QREST+"/quote_state?id=eq."+QID+"&select=state,updated_at",{headers:QH,cache:'no-store'}); const rows=await r.json(); if(Array.isArray(rows)&&rows[0]){ applyState(rows[0].state); QTS=rows[0].updated_at||null; } }catch(e){} QLOADED=true; render(); }
 function qsave(){ if(!QLOADED)return; clearTimeout(qsaveT); qsaveT=setTimeout(async()=>{ try{ const now=new Date().toISOString(); const body={id:QID,state:stateObj(),updated_at:now}; await fetch(QREST+"/quote_state?on_conflict=id",{method:'POST',headers:Object.assign({'Content-Type':'application/json',Prefer:'resolution=merge-duplicates,return=minimal'},QH),body:JSON.stringify(body)}); QTS=now; }catch(e){} },700); }
 function qreset(){ snapshot(); for(let i=0;i<sel.length;i++){ sel[i]=defSel[i]; qty[i]=defQty[i]; removed[i]=defRemoved[i]; } custom.splice(0,custom.length); render(); }
@@ -256,7 +258,7 @@ const timg0=QIMG[it.label]?'<img class="ithumb" src="'+QIMG[it.label]+'" alt="" 
 let timg=tx?'<div class="ithumbs">'+timg0+tx+'</div>':timg0;
 const staleRender=(it.label==='Entry credenza - 72×25×42'||it.label==='Lounge chairs (public + hallway)')&&(it.opts[sel[i]]||{}).tierFull!==it.rec;
 if(staleRender&&timg){ timg='<div class="staleimg">'+timg+'<div class="staletag">Render no longer applies · selection changed</div></div>'; }
-d.innerHTML=`${xb}<div class="irow">${timg}<div class="icontent"><div class="ihead"><div><span class="iname">${it.label}</span>${cn}${it.com?' <span class="com">COM</span>':''}${it.yd?' <span class="yd">'+it.yd+' yd/ea · '+(qty[i]*it.yd).toFixed(1).replace(/\.0$/,'')+' yd total</span>':''}<span class="iqty">qty <input class="qtyin" type="number" step="${stp}" data-i="${i}" min="${lb}" value="${fmtq(qty[i])}" title="Edit quantity">${it.prevQty!=null?' <s class="qprev">prev '+fmtq(it.prevQty)+'</s>':''}${hint}</span></div><div class="ipick" id="pick${i}"></div></div>${it.flag?'<div class="iflag">'+it.flag+'</div>':''}${sfNote}<div class="opts">${opts}</div></div></div>`;
+d.innerHTML=`${xb}<div class="irow">${timg}<div class="icontent"><div class="ihead"><div><span class="iname">${it.label}</span>${cn}${it.com?' <span class="com">COM</span>':''}${it.yd?' <span class="yd">'+it.yd+' yd/ea · '+(qty[i]*it.yd).toFixed(1).replace(/\.0$/,'')+' yd total</span>':''}<span class="iqty">qty <input class="qtyin" type="number" step="${stp}" data-i="${i}" min="${lb}" value="${fmtq(qty[i])}" title="Edit quantity">${it.prevQty!=null?' <s class="qprev">prev '+fmtq(it.prevQty)+'</s>':''}${hint}</span></div><div class="ipick" id="pick${i}"></div></div>${it.flag?('<div class="iflag">'+(it.label==='Replace doors - coffee bars'?('Cabinet door paint color: <input class="paintin" data-key="'+esc(it.label)+'" type="text" value="'+esc(FIELD[it.label]||'')+'" placeholder="type color (saves automatically)">'):it.flag)+'</div>'):''}${sfNote}<div class="opts">${opts}</div></div></div>`;
 return d;
 }
 function render(){
@@ -291,6 +293,7 @@ snapshot(); qty[i]=n; render();
 });
 el.addEventListener('keydown',e=>{if(e.key==='Enter')el.blur();});
 });
+L.querySelectorAll('.paintin').forEach(el=>{ el.addEventListener('input',()=>{ FIELD[el.dataset.key]=el.value; qsave(); }); });
 L.querySelectorAll('.xbtn').forEach(el=>{
 el.addEventListener('click',()=>{const i=+el.dataset.rm; snapshot(); removed[i]=!removed[i]; render();});
 });
