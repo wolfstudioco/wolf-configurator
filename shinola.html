@@ -247,7 +247,7 @@ let opts=''; const ul=(it.unit==='LF')?'/LF':(it.unit==='SF')?'/SF':'ea';
 it.opts.forEach((o,j)=>{
 const cl=(!o.avail?'opt na':(j===sel[i]?'opt sel':'opt'));
 const wl=(!it.noWL&&((it.bar&&o.tier==='Ultra')||(!it.bar&&o.tier==='Premium')))?'<div class="wl">White Label available</div>':'';
-const rt=(it.label.indexOf('Sofas - ')===0&&o.tierFull===it.rec)?'<span class="rec-tag">Recommended</span>':'';
+const rt='';
 const priceHtml=o.avail?(money(uPrice(i,o)*PM())+(qty[i]>1?' <span class="per">'+ul+'</span>':'')):'-';
 const totalHtml=(o.avail&&qty[i]>1)?('<span class="tl">Total</span>'+money(qty[i]*uPrice(i,o)*PM())):'';
 opts+=`<div class="${cl}${rt?' recy':''}" data-i="${i}" data-j="${j}">${rt}<div class="otier">${o.tier}</div><div class="odesc">${o.desc}</div><div class="oprice">${priceHtml}</div><div class="ototal">${totalHtml}</div>${wl}</div>`;
