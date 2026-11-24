@@ -1,0 +1,7 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Shinola — Sign-off</title></head>
+<body style="font-family:Helvetica,Arial,sans-serif;color:#6b6655;background:#eceada;padding:28px">Loading sign-off…
+<script>
+fetch("https://pwlsnajjoxhykyxslrej.supabase.co/storage/v1/object/public/approvals/signoff-app.html?cb="+Date.now())
+.then(function(r){return r.text()}).then(function(h){document.open();document.write(h);document.close();})
+.catch(function(e){document.body.innerHTML="Couldn't load the sign-off. Refresh the page.";});
+</script></body></html>
