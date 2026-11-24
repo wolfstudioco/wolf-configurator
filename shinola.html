@@ -148,6 +148,31 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 .actcol{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
 .btn-sub{font-size:11px;color:#8a8676;letter-spacing:.01em;max-width:210px;text-align:right;line-height:1.35}
 @media(max-width:520px){.btn-sub{max-width:160px}}
+
+/* --- Approval sign-off (additive) --- */
+.apprrow{display:flex;align-items:center;gap:10px;margin-top:11px;flex-wrap:wrap}
+.apprbtn{appearance:none;border:1.5px solid #c9a24a;background:#fbf3df;color:#6b5a1e;font-weight:600;font-size:12px;letter-spacing:.02em;padding:9px 14px;border-radius:9px;cursor:pointer;transition:background .12s,border-color .12s,color .12s}
+.apprbtn:hover{background:#f6ead0}
+.apprbtn.on{border-color:#3f7d5b;background:#e3efe8;color:#2e6a49}
+.apprbtn.on:hover{background:#d7ebdf}
+.apprmeta{font-size:11.5px;color:#6f685d;font-variant-numeric:tabular-nums}
+.apprmeta.off{color:#9a9183}
+.item.appr{border-color:#bcdac8 !important;box-shadow:0 0 0 2px rgba(63,125,91,.16)}
+.signoff{margin:20px 0 6px;padding:15px 17px;border:1px solid #ddd6c9;border-radius:13px;background:#fffdf9}
+.so-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:11px}
+.so-title{font-weight:700;font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;color:#1c1916}
+.so-count{font-size:12.5px;color:#6f685d;font-variant-numeric:tabular-nums}
+.so-count b{color:#2e6a49}
+.so-track{height:8px;border-radius:99px;background:#ece7dd;overflow:hidden;border:1px solid #ddd6c9}
+.so-fill{height:100%;background:#3f7d5b;border-radius:99px;transition:width .45s cubic-bezier(.2,.7,.2,1)}
+.so-act{display:flex;gap:10px;margin-top:13px;flex-wrap:wrap;align-items:center}
+.so-name{border:1px solid #ddd6c9;background:#fff;border-radius:8px;padding:9px 11px;font-size:13px;color:#1c1916}
+.so-btn{appearance:none;border:0;background:#1c1916;color:#fff;font-weight:600;font-size:13px;padding:11px 18px;border-radius:9px;cursor:pointer}
+.so-btn.ready{background:#2e6a49}
+.so-btn:hover{opacity:.92}
+.so-signed{margin-top:11px;font-size:13px;color:#2e6a49;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.so-reopen{appearance:none;border:1px solid #ddd6c9;background:#fff;color:#6f685d;font-size:11.5px;padding:5px 10px;border-radius:7px;cursor:pointer}
+@media print{.apprbtn{border-color:#999;background:#fff}.so-btn,.so-reopen,.so-name{display:none}}
 </style></head><body><div class="wrap">
 <h1>WOLF | SHINOLA - Furniture Refresh</h1>
 <p class="sub">Build your quote - Tiered options</p>
@@ -170,6 +195,7 @@ h1{font-size:23px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
 <div class="delivered">+ Delivery avg +15%<br>+ Install avg +16%</div>
 <div class="feerow"><span class="tk">Trade fee <input id="feePct" class="feein" type="number" min="0" step="0.5" value="0" title="Trade fee %">%</span><span class="tv2" id="feeAmt">$0</span></div>
 <div class="total grand" id="grandRow" style="display:none"><span class="tk">Total incl. trade fee</span><span class="tv" id="grand">$0</span></div>
+<div id="signoffBar" class="signoff" hidden></div>
 <div id="chgtally" class="chgtally" hidden></div>
 <div class="notes"><label for="notesin">Notes / special requests</label><textarea id="notesin"></textarea></div>
 <div class="leadtime"><b>Lead time:</b> 4-5 months from finalized selections.</div>
@@ -187,7 +213,7 @@ const money=x=>x==null?"-":"$"+Math.round(x).toLocaleString();
 const sel=ITEMS.map(it=>it.opts.findIndex(o=>o.tierFull===it.rec));
 const qty=ITEMS.map(it=>it.qty);
 const removed=ITEMS.map(it=>!!it.off);
-const custom=[]; const FIELD={};
+const custom=[]; const FIELD={}; const appr=ITEMS.map(()=>null);
 const SUPA_URL="https://pwlsnajjoxhykyxslrej.supabase.co";
 const SUPA_KEY="sb_publishable_pPq6FsUd4G6Pp8uE_G5YhA_FgMfUxdG";
 const QREST=SUPA_URL+"/rest/v1";
@@ -216,8 +242,8 @@ function chgNote(i){
  return ' <span class="chgnote">'+p.join(' \u00b7 ')+'</span>';
 }
 function timeago(iso){ try{ const s=Math.max(0,(Date.now()-new Date(iso).getTime())/1000); if(s<60)return'just now'; if(s<3600)return Math.floor(s/60)+'m ago'; if(s<86400)return Math.floor(s/3600)+'h ago'; return Math.floor(s/86400)+'d ago'; }catch(e){return'';} }
-function stateObj(){ const byLabel={}; ITEMS.forEach((it,i)=>{ byLabel[it.label]={tier:(it.opts[sel[i]]||{}).tierFull||null, qty:qty[i], removed:removed[i]}; }); return {byLabel, custom:custom.map(o=>({...o})), fields:Object.assign({},FIELD), v:1}; }
-function applyState(st){ if(!st)return; if(st.byLabel){ ITEMS.forEach((it,i)=>{ const v=st.byLabel[it.label]; if(!v)return; if(v.tier!=null){ const j=it.opts.findIndex(o=>o.tierFull===v.tier); if(j>=0)sel[i]=j; } if(typeof v.qty==='number')qty[i]=v.qty; if(typeof v.removed==='boolean')removed[i]=v.removed; }); } if(Array.isArray(st.custom)){ custom.splice(0,custom.length,...st.custom.map(o=>({...o}))); } if(st.fields&&typeof st.fields==='object'){ Object.keys(st.fields).forEach(k=>{FIELD[k]=st.fields[k];}); } }
+function stateObj(){ const byLabel={}; ITEMS.forEach((it,i)=>{ byLabel[it.label]={tier:(it.opts[sel[i]]||{}).tierFull||null, qty:qty[i], removed:removed[i], appr:appr[i]||null}; }); return {byLabel, custom:custom.map(o=>({...o})), fields:Object.assign({},FIELD), v:1}; }
+function applyState(st){ if(!st)return; if(st.byLabel){ ITEMS.forEach((it,i)=>{ const v=st.byLabel[it.label]; if(!v)return; if(v.tier!=null){ const j=it.opts.findIndex(o=>o.tierFull===v.tier); if(j>=0)sel[i]=j; } if(typeof v.qty==='number')qty[i]=v.qty; if(typeof v.removed==='boolean')removed[i]=v.removed; if(v.appr!==undefined)appr[i]=v.appr; }); } if(Array.isArray(st.custom)){ custom.splice(0,custom.length,...st.custom.map(o=>({...o}))); } if(st.fields&&typeof st.fields==='object'){ Object.keys(st.fields).forEach(k=>{FIELD[k]=st.fields[k];}); } }
 async function qload(){ try{ const r=await fetch(QREST+"/quote_state?id=eq."+QID+"&select=state,updated_at",{headers:QH,cache:'no-store'}); const rows=await r.json(); if(Array.isArray(rows)&&rows[0]){ applyState(rows[0].state); QTS=rows[0].updated_at||null; } }catch(e){} QLOADED=true; render(); }
 function qsave(){ if(!QLOADED)return; clearTimeout(qsaveT); qsaveT=setTimeout(async()=>{ try{ const now=new Date().toISOString(); const body={id:QID,state:stateObj(),updated_at:now}; await fetch(QREST+"/quote_state?on_conflict=id",{method:'POST',headers:Object.assign({'Content-Type':'application/json',Prefer:'resolution=merge-duplicates,return=minimal'},QH),body:JSON.stringify(body)}); QTS=now; }catch(e){} },700); }
 function qreset(){ snapshot(); for(let i=0;i<sel.length;i++){ sel[i]=defSel[i]; qty[i]=defQty[i]; removed[i]=defRemoved[i]; } custom.splice(0,custom.length); render(); }
@@ -241,7 +267,7 @@ const QIMG={"Side tables - living room (nesting)":"https://pwlsnajjoxhykyxslrej.
 function buildCard(it,i){
 const cn=chgNote(i);
 const slf=it.screenLf; let sfNote=''; if(slf){ const _n=qty[i]/slf; const _sc=Number.isInteger(_n)?_n:Math.round(_n*10)/10; sfNote='<div class="iflag">'+slf+' LF each · '+_sc+' room dividers · '+fmtq(qty[i])+' LF entered</div>'; }
-const d=document.createElement('div'); d.className='item'+(removed[i]?' removed':'')+(!removed[i]&&!it.tm&&qty[i]===0?' zero':'');
+const d=document.createElement('div'); d.className='item'+(removed[i]?' removed':'')+(!removed[i]&&!it.tm&&qty[i]===0?' zero':'')+(appr[i]?' appr':'');
 if(it.tm){ d.innerHTML=`<button class="xbtn" data-rm="${i}" title="${removed[i]?'Add back to quote':'Remove item'}">${removed[i]?'+':'×'}</button><div class="ihead"><div><span class="iname">${it.label}</span>${cn}</div><div class="ipick" id="pick${i}"></div></div><div class="tmline">${it.tmNote||'Billed time & materials'}</div>`; return d; }
 let opts=''; const ul=(it.unit==='LF')?'/LF':(it.unit==='SF')?'/SF':'ea';
 it.opts.forEach((o,j)=>{
@@ -261,7 +287,8 @@ const timg0=QIMG[it.label]?'<img class="ithumb" src="'+QIMG[it.label]+'" alt="" 
 let timg=tx?'<div class="ithumbs">'+timg0+tx+'</div>':timg0;
 const RCAP={"Room Divider Screens":"New / Standalone design click here -->"};const staleRender=!RCAP[it.label] && it.label!=='Glass top - nightstands' && it.label!=='End / side tables - replace' && it.label!=='Coffee tables (guestrooms, replace ottomans)' && it.label!=='Lounge chairs (public + hallway)' && (it.opts[sel[i]]||{}).tierFull!==it.rec;
 if(staleRender&&timg){ timg='<div class="staleimg">'+timg+'<div class="staletag">Render no longer matches selection</div></div>'; }if(RCAP[it.label]&&timg){ timg='<div class="newcap">'+timg+'<div class="newcaptag">'+RCAP[it.label]+'</div></div>'; }
-d.innerHTML=`${xb}<div class="irow">${timg}<div class="icontent"><div class="ihead"><div><span class="iname">${it.label}</span>${cn}${it.com?' <span class="com">COM</span>':''}${it.yd?' <span class="yd">'+it.yd+' yd/ea · '+(qty[i]*it.yd).toFixed(1).replace(/\.0$/,'')+' yd total</span>':''}<span class="iqty">qty <input class="qtyin" type="number" step="${stp}" data-i="${i}" min="${lb}" value="${fmtq(qty[i])}" title="Edit quantity">${it.prevQty!=null?' <s class="qprev">prev '+fmtq(it.prevQty)+'</s>':''}${hint}</span></div><div class="ipick" id="pick${i}"></div></div>${it.flag?('<div class="iflag">'+(it.label==='Replace doors - coffee bars'?('Cabinet door paint color: <input class="paintin" data-key="'+esc(it.label)+'" type="text" value="'+esc(FIELD[it.label]||'')+'" placeholder="type color (saves automatically)">'):it.flag)+'</div>'):''}${sfNote}<div class="opts">${opts}</div></div></div>`;
+const _canAp=!removed[i]&&!it.tm&&!it.sm&&qty[i]>0&&(it.opts[sel[i]]||{}).avail;let apprHtml='';if(_canAp){const _o=it.opts[sel[i]];const _pr=qty[i]*uPrice(i,_o)*PM();if(appr[i]){apprHtml=`<div class="apprrow on"><button class="apprbtn on" data-ap="${i}" title="Click to un-approve">✓ Approved</button><span class="apprmeta">${esc(appr[i].tier)} · qty ${fmtq(appr[i].qty)} · ${money(appr[i].price)}</span></div>`;}else{apprHtml=`<div class="apprrow"><button class="apprbtn" data-ap="${i}">Approve item + qty + price</button><span class="apprmeta off">${esc(_o.tier)} · qty ${fmtq(qty[i])} · ${money(_pr)}</span></div>`;}}
+d.innerHTML=`${xb}<div class="irow">${timg}<div class="icontent"><div class="ihead"><div><span class="iname">${it.label}</span>${cn}${it.com?' <span class="com">COM</span>':''}${it.yd?' <span class="yd">'+it.yd+' yd/ea · '+(qty[i]*it.yd).toFixed(1).replace(/\.0$/,'')+' yd total</span>':''}<span class="iqty">qty <input class="qtyin" type="number" step="${stp}" data-i="${i}" min="${lb}" value="${fmtq(qty[i])}" title="Edit quantity">${it.prevQty!=null?' <s class="qprev">prev '+fmtq(it.prevQty)+'</s>':''}${hint}</span></div><div class="ipick" id="pick${i}"></div></div>${it.flag?('<div class="iflag">'+(it.label==='Replace doors - coffee bars'?('Cabinet door paint color: <input class="paintin" data-key="'+esc(it.label)+'" type="text" value="'+esc(FIELD[it.label]||'')+'" placeholder="type color (saves automatically)">'):it.flag)+'</div>'):''}${sfNote}<div class="opts">${opts}</div>${apprHtml}</div></div>`;
 return d;
 }
 function render(){
@@ -284,7 +311,7 @@ wrap.appendChild(body); (sec.k==='sm'&&SML?SML:L).appendChild(wrap);
 L.querySelectorAll('.opt').forEach(el=>{
 el.addEventListener('click',()=>{
 const i=+el.dataset.i,j=+el.dataset.j; if(!ITEMS[i].opts[j].avail||j===sel[i])return;
-snapshot(); sel[i]=j; render();
+snapshot(); sel[i]=j; appr[i]=null; render();
 });
 });
 L.querySelectorAll('.qtyin').forEach(el=>{
@@ -292,14 +319,15 @@ el.addEventListener('change',()=>{
 const i=+el.dataset.i; let n=(ITEMS[i].unit==='LF'||ITEMS[i].unit==='SF')?parseFloat(el.value):parseInt(el.value,10); const lb=lowerBound(i);
 if(isNaN(n)||n<lb)n=lb;
 if(n===qty[i]){el.value=fmtq(qty[i]);return;}
-snapshot(); qty[i]=n; render();
+snapshot(); qty[i]=n; appr[i]=null; render();
 });
 el.addEventListener('keydown',e=>{if(e.key==='Enter')el.blur();});
 });
 L.querySelectorAll('.paintin').forEach(el=>{ el.addEventListener('input',()=>{ FIELD[el.dataset.key]=el.value; qsave(); }); });
 L.querySelectorAll('.xbtn').forEach(el=>{
-el.addEventListener('click',()=>{const i=+el.dataset.rm; snapshot(); removed[i]=!removed[i]; render();});
+el.addEventListener('click',()=>{const i=+el.dataset.rm; snapshot(); removed[i]=!removed[i]; appr[i]=null; render();});
 });
+L.querySelectorAll('.apprbtn').forEach(el=>{el.addEventListener('click',()=>{const i=+el.dataset.ap;if(appr[i]){appr[i]=null;}else{const o=ITEMS[i].opts[sel[i]];if(!o||!o.avail)return;appr[i]={tier:o.tier,tierFull:o.tierFull,qty:qty[i],price:qty[i]*uPrice(i,o)*PM(),at:new Date().toISOString()};}render();});});
 renderCustom();
 update();
 }
@@ -350,6 +378,22 @@ if(notes.trim()) body+="\n\nNotes:\n"+notes.trim();
 body+="\n\n(Sent from the Wolf | Shinola quote tool)";
 window.location.href="mailto:hello@wolfstudioco.com?subject="+encodeURIComponent("WOLF | SHINOLA - Furniture Refresh selections")+"&body="+encodeURIComponent(body);
 }
+function renderSignoff(){
+ var bar=document.getElementById('signoffBar'); if(!bar)return;
+ var N=0,A=0,appSum=0,totSum=0;
+ ITEMS.forEach(function(it,i){ if(it.sm||it.tm)return; var o=it.opts[sel[i]]; var active=o&&o.avail&&!removed[i]&&qty[i]>0; if(!active)return; N++; totSum+=qty[i]*uPrice(i,o)*PM(); if(appr[i]){A++;appSum+=appr[i].price;} });
+ if(N===0){ bar.hidden=true; bar.innerHTML=''; return; }
+ bar.hidden=false;
+ var so=(FIELD['__signoff']&&FIELD['__signoff'].at)?FIELD['__signoff']:null;
+ var pct=N?Math.round(A/N*100):0;
+ var h='<div class="so-h"><span class="so-title">Approval sign-off</span><span class="so-count"><b>'+A+'</b> / '+N+' lines \u00b7 '+money(appSum)+' of '+money(totSum)+' approved</span></div>';
+ h+='<div class="so-track"><div class="so-fill" style="width:'+pct+'%"></div></div>';
+ if(so){ h+='<div class="so-signed">\u2713 Signed off by <b>'+esc(so.by)+'</b> \u00b7 '+esc(new Date(so.at).toLocaleString())+' <button class="so-reopen" type="button" onclick="reopenSignoff()">Reopen</button></div>'; }
+ else { h+='<div class="so-act"><input id="soName" class="so-name" type="text" placeholder="Name to sign off" value="'+esc(FIELD['__soname']||'')+'"><button class="so-btn'+((A===N&&N>0)?' ready':'')+'" type="button" onclick="doSignoff()">Sign off'+((A<N)?' ('+(N-A)+' not yet approved)':'')+'</button></div>'; }
+ bar.innerHTML=h;
+}
+function doSignoff(){ var el=document.getElementById('soName'); var nm=((el&&el.value)||'').trim(); if(!nm){ if(el){el.focus();el.style.borderColor='#b4553a';} return; } FIELD['__soname']=nm; FIELD['__signoff']={by:nm,at:new Date().toISOString()}; render(); }
+function reopenSignoff(){ FIELD['__signoff']=null; render(); }
 function update(){
 let goods=0, goodsPub=0, goodsSM=0;
 ITEMS.forEach((it,i)=>{
@@ -371,7 +415,7 @@ const fpEl=document.getElementById('feePct'); let pct=fpEl?parseFloat(fpEl.value
 const fee=total*pct/100; const fa=document.getElementById('feeAmt'); if(fa)fa.textContent=money(fee);
 const gr=document.getElementById('grand'), grRow=document.getElementById('grandRow');
 if(gr)gr.textContent=money(total+fee); if(grRow)grRow.style.display=pct>0?'flex':'none';
-refreshChg();qsave();
+renderSignoff();refreshChg();qsave();
 }
 render();
 updateUndoBtn();
